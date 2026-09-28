@@ -26,18 +26,16 @@ class TestAttemptRepository
 
     public function getPassedTests(int $userId)
     {
-        return TestAttempt::where('user_id', $userId)
-            ->select([
-                'id',
-                'test_id',
-                'attempt',
-                'has_passed',
-                'user_points',
-                'percent',
-                'grade',
-                'created_at',
-            ])
-            ->orderByDesc('id')
+        return Test::whereHas('testAttempts', function ($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })
+            ->withCount('testAttempts')
+            // Find the latest updated_at or created_at timestamp from the user's attempts on each test
+            ->withMax(['testAttempts as latest_attempt' => function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            }], 'created_at') // or 'updated_at' depending on your tracking
+            // Order the tests table by that computed maximum timestamp from test_attempts
+            ->orderByDesc('latest_attempt')
             ->paginate(6, ['*'], 'passed_page');
     }
 

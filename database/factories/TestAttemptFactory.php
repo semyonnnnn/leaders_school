@@ -23,7 +23,7 @@ class TestAttemptFactory extends Factory
 
         $maxPoints = $test->maxPoints;
         $userPoints = fake()->numberBetween(0, $maxPoints);
-        $percent = (int) ceil($userPoints / $maxPoints * 100);
+        $percent = $maxPoints > 0 ? (int) ceil($userPoints / $maxPoints * 100) : 0;
 
         $grade = match (true) {
             $percent >= 85 => 5,
@@ -46,18 +46,19 @@ class TestAttemptFactory extends Factory
     }
 
     /**
-     * Automatically assign a random existing test
+     * Automatically assign a random existing test (excluding tests owned by the user)
      * and compute the next valid attempt number.
      */
     public function forRandomExistingTest(User|int $user): static
     {
         $userId = $user instanceof User ? $user->id : $user;
 
-        $test = Test::inRandomOrder()->first();
+        // Pick a random test that does NOT belong to this user
+        $test = Test::where('user_id', '!=', $userId)->inRandomOrder()->first();
 
         if (!$test) {
             throw new \Exception(
-                'Cannot create test attempt: No tests found in the database.'
+                'Cannot create test attempt: No valid tests found in the database that do not belong to this user.'
             );
         }
 
@@ -73,7 +74,7 @@ class TestAttemptFactory extends Factory
 
         $maxPoints = $test->maxPoints;
         $userPoints = fake()->numberBetween(0, $maxPoints);
-        $percent = (int) ceil($userPoints / $maxPoints * 100);
+        $percent = $maxPoints > 0 ? (int) ceil($userPoints / $maxPoints * 100) : 0;
 
         $grade = match (true) {
             $percent >= 85 => 5,

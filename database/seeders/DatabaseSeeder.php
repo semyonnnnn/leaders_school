@@ -62,18 +62,36 @@ class DatabaseSeeder extends Seeder
         if (!$Alina->hasRole(RolesEnum::Admin)) {
             $Alina->assignRole(RolesEnum::Admin);
         }
-        User::factory()->count(48)->create();
 
-        Test::factory()->count(100)->create();
-        Test::factory()->count(100)->create([
-            'user_id' => $Alina->id,
-        ]);
+        // Create users with staggered timestamps (1 millisecond apart)
+        for ($i = 0; $i < 48; $i++) {
+            User::factory()->create();
+            usleep(1000);
+        }
 
-        // Generate 20 safe, progressive attempts for the root user one by one
+        // Create global tests with staggered timestamps
+        for ($i = 0; $i < 100; $i++) {
+            Test::factory()->create();
+            usleep(1000);
+        }
+
+        // Create Alina's tests with staggered timestamps
+        for ($i = 0; $i < 100; $i++) {
+            Test::factory()->create([
+                'user_id' => $Alina->id,
+            ]);
+            usleep(1000);
+        }
+
+        // Generate 20 safe, progressive attempts for the root user with staggered timestamps
         for ($i = 0; $i < 20; $i++) {
             TestAttempt::factory()
                 ->forRandomExistingTest($rootUser)
-                ->create();
+                ->create([
+                    'created_at' => now()->subMinutes(20 - $i),
+                    'updated_at' => now()->subMinutes(20 - $i),
+                ]);
+            usleep(1000);
         }
     }
 }

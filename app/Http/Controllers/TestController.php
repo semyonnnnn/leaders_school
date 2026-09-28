@@ -20,6 +20,8 @@ class TestController extends Controller
         $userId = Auth::id();
         $activeTab = $request->query('tab', 'available');
 
+        // dd($repo->getPassedTests($userId));
+
         return Inertia::render('Test/Index', [
             'active_tab' => $activeTab,
 
