@@ -21,12 +21,14 @@ class TestFactory extends Factory
         $russianFaker = \Faker\Factory::create('ru_RU');
 
         $content = [];
+
         for ($i = 0; $i < rand(3, 8); $i++) {
             $options = [];
             $correctIndex = $russianFaker->numberBetween(0, 3);
 
             for ($j = 0; $j < 4; $j++) {
                 $optText = ucfirst($russianFaker->words(2, true));
+
                 if (mb_strlen($optText) < 3) {
                     $optText = 'Вариант ' . $optText;
                 }
@@ -39,6 +41,7 @@ class TestFactory extends Factory
             }
 
             $qText = ucfirst($russianFaker->sentence(4));
+
             if (mb_strlen($qText) < 3) {
                 $qText = 'Вопрос по теме?';
             }
@@ -52,17 +55,19 @@ class TestFactory extends Factory
         }
 
         $title = ucfirst($russianFaker->sentence(3));
+
         if (mb_strlen($title) < 3) {
             $title = 'Тест знаний';
         }
 
         $description = $russianFaker->paragraph();
+
         if (mb_strlen($description) < 3) {
             $description = 'Описание теста.';
         }
 
-        // Delegate structure, counts, and minimal score calculations to TestService
         $testService = app(TestService::class);
+
         $testData = $testService->getData([
             'title' => mb_substr($title, 0, 255),
             'description' => mb_substr($description, 0, 255),
@@ -75,7 +80,8 @@ class TestFactory extends Factory
             'content' => $testData['content'],
             'questions_count' => $testData['questions_count'],
             'minPoints' => $testData['minPoints'],
-            'user_id' => '1',
+            'maxPoints' => $testData['maxPoints'],
+            'user_id' => 1,
         ];
     }
 }

@@ -10,19 +10,21 @@ class TestService
     public function getData(array $data): array
     {
         $questions = $data['questions'] ?? [];
-        $minimalScore = $this->calculateMinPassingScore($questions);
+        $minPoints = $this->calculateScores($questions)['minPoints'];
+        $maxPoints = $this->calculateScores($questions)['maxPoints'];
 
         return [
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'content' => $questions,
             'questions_count' => count($questions),
-            'minPoints' => $minimalScore,
+            'minPoints' => $minPoints,
+            'maxPoints' => $maxPoints,
             'user_id' => Auth::id(),
         ];
     }
 
-    public function calculateMinPassingScore(?array $questions): int
+    public function calculateScores(?array $questions): array
     {
         $questions = $questions ?? [];
 
@@ -58,6 +60,6 @@ class TestService
             }
         }
 
-        return $passingScore;
+        return ['minPoints' => $passingScore, 'maxPoints' => $totalPoints];
     }
 }

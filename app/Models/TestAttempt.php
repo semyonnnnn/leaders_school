@@ -18,6 +18,8 @@ class TestAttempt extends Model
         'attempt',
         'has_passed',
         'content',
+        'user_points',
+        'max_points',
         'percent',
         'grade',
     ];

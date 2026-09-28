@@ -9,18 +9,18 @@ import { TestCard } from "./Partials/TestCard";
 import { Pagination } from "@/components/custom/Pagination"; // Make sure path matches your structure
 import DeleteTestConfirmationModal from "@/Pages/Test/Partials/DeleteTestConfirmationModal";
 
-type TabType = 'available' | 'passed' | 'my';
+type TabType = 'available' | 'completed' | 'my';
 
 export default function Index(
     {
         available_tests,
-        passed_tests,
+        completed_tests,
         my_tests,
         current_user_id,
         active_tab
     }: {
         available_tests?: PaginatedTest;
-        passed_tests?: PaginatedTest;
+        completed_tests?: PaginatedTest;
         my_tests?: PaginatedTest;
         current_user_id: number;
         active_tab: TabType;
@@ -34,7 +34,7 @@ export default function Index(
         isOpen: boolean;
         id: number | string | null;
         title: string;
-        type: 'available' | 'passed' | null;
+        type: 'available' | 'completed' | null;
     }>({
         isOpen: false,
         id: null,
@@ -94,8 +94,8 @@ export default function Index(
             only: [
                 tab === 'available'
                     ? 'available_tests'
-                    : tab === 'passed'
-                        ? 'passed_tests'
+                    : tab === 'completed'
+                        ? 'completed_tests'
                         : 'my_tests'
             ],
             preserveState: true,
@@ -113,13 +113,13 @@ export default function Index(
         });
     };
 
-    // TRIGGER MODAL FOR PASSED TESTS
-    const openDeletePassedModal = (id: string | number, title: string) => {
+    // TRIGGER MODAL FOR Completed TESTS
+    const openDeleteCompletedModal = (id: string | number, title: string) => {
         setDeleteModal({
             isOpen: true,
             id,
             title,
-            type: 'passed'
+            type: 'completed'
         });
     };
 
@@ -141,16 +141,16 @@ export default function Index(
     const currentTests =
         activeTab === 'available'
             ? available_tests
-            : activeTab === 'passed'
-                ? passed_tests
+            : activeTab === 'completed'
+                ? completed_tests
                 : my_tests;
 
     // Determine the corresponding 'only' prop identifier for pagination requests
     const currentPaginationOnlyProp =
         activeTab === 'available'
             ? 'available_tests'
-            : activeTab === 'passed'
-                ? 'passed_tests'
+            : activeTab === 'completed'
+                ? 'completed_tests'
                 : 'my_tests';
 
     const currentEmptyMessage =
@@ -159,8 +159,8 @@ export default function Index(
             : "Записи не найдены по заданным критериям";
 
     const currentDeleteHandler =
-        activeTab === 'passed'
-            ? openDeletePassedModal
+        activeTab === 'completed'
+            ? openDeleteCompletedModal
             : openDeleteAvailableModal;
 
     return (
@@ -270,7 +270,7 @@ export default function Index(
                                 </div>
                             )}
 
-                            {activeTab === 'passed' && (
+                            {activeTab === 'completed' && (
                                 <div className="relative pl-5 border-l-8 border-zinc-950 py-1">
                                     <div className="absolute top-0 left-0 w-3 h-2 bg-emerald-500 -ml-2"></div>
                                     <div className="flex items-center gap-3 mb-2">
@@ -278,7 +278,7 @@ export default function Index(
                                             Завершенные Тесты
                                         </h2>
                                         <span className="text-xs text-zinc-700 font-black tracking-wider bg-zinc-300 border-2 border-zinc-400 px-2 py-1 clip-corner">
-                                            [{passed_tests?.total ?? 0} В АРХИВЕ]
+                                            [{completed_tests?.total ?? 0} В АРХИВЕ]
                                         </span>
                                     </div>
                                     <p className="text-zinc-600 text-xs md:text-sm font-bold uppercase tracking-wider">
@@ -330,8 +330,8 @@ export default function Index(
                             </button>
 
                             <button
-                                onClick={() => handleTabChange('passed')}
-                                className={`px-6 py-3 border-2 text-sm font-black uppercase tracking-[0.15em] transition-all duration-200 cursor-pointer clip-corner shadow-xs ${activeTab === 'passed'
+                                onClick={() => handleTabChange('completed')}
+                                className={`px-6 py-3 border-2 text-sm font-black uppercase tracking-[0.15em] transition-all duration-200 cursor-pointer clip-corner shadow-xs ${activeTab === 'completed'
                                     ? 'bg-amber-500 border-zinc-950 text-zinc-950'
                                     : 'bg-zinc-950 border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-zinc-950'
                                     }`}

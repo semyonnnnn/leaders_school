@@ -9,64 +9,34 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Test\TestStoreRequest;
 use App\Http\Requests\Test\TestUpdateRequest;
 use App\Models\Test;
+use App\Models\TestAttempt;
+use App\Repositories\TestAttemptRepository;
 use App\Services\TestService;
 
 class TestController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, TestAttemptRepository $repo)
     {
         $userId = Auth::id();
-        $activeTab = $request->query('tab', 'available'); // defaults to 'available' if not specified
+        $activeTab = $request->query('tab', 'available');
 
         return Inertia::render('Test/Index', [
             'active_tab' => $activeTab,
 
             'available_tests' => $activeTab === 'available'
-                ? $this->getAvailableTests($userId)
-                : Inertia::lazy(fn() => $this->getAvailableTests($userId)),
+                ? $repo->getAvailableTests($userId)
+                : Inertia::lazy(fn() => $repo->getAvailableTests($userId)),
 
             'my_tests' => $activeTab === 'my'
-                ? $this->getMyTests($userId)
-                : Inertia::lazy(fn() => $this->getMyTests($userId)),
+                ? $repo->getMyTests($userId)
+                : Inertia::lazy(fn() => $repo->getMyTests($userId)),
 
-            'passed_tests' => $activeTab === 'passed'
-                ? $this->getPassedTests($userId)
-                : Inertia::lazy(fn() => $this->getPassedTests($userId)),
+            'completed_tests' => $activeTab === 'completed'
+                ? $repo->getPassedTests($userId)
+                : Inertia::lazy(fn() => $repo->getPassedTests($userId)),
 
             'current_user_id' => $userId,
         ]);
-    }
-
-    private function getAvailableTests(int $userId)
-    {
-        return Test::select(['id', 'title', 'description', 'user_id', 'questions_count', 'created_at'])
-            ->where('user_id', '!=', $userId)
-            ->whereDoesntHave('passedUsers', fn($q) => $q->where('user_id', $userId))
-            ->latest()
-            ->orderBy('id', 'desc')
-            ->paginate(6, ['*'], 'available_page');
-    }
-
-    private function getMyTests(int $userId)
-    {
-        return Test::select(['id', 'title', 'description', 'user_id', 'questions_count', 'created_at'])
-            ->where('user_id', $userId)
-            ->latest()
-            ->orderBy('id', 'desc')
-            ->paginate(6, ['*'], 'my_page');
-    }
-
-    private function getPassedTests(int $userId)
-    {
-        return Test::select(['id', 'title', 'description', 'user_id', 'questions_count', 'created_at'])
-            ->where('user_id', '!=', $userId)
-            ->whereHas('testAttempts', function ($q) use ($userId) {
-                $q->where('user_id', $userId)
-                    ->where('has_passed', true);
-            })
-            ->latest()
-            ->orderBy('id', 'desc')
-            ->paginate(6, ['*'], 'passed_page');
     }
 
     public function store(TestStoreRequest $r, TestService $testService)

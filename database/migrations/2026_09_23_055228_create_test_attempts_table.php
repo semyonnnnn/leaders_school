@@ -35,6 +35,7 @@ return new class extends Migration
             // points percentage in TestEvaluationService.
             $table->unsignedTinyInteger('percent');
             $table->unsignedTinyInteger('grade');
+            $table->unsignedTinyInteger('user_points');
 
             $table->timestamps();
 

@@ -7,6 +7,7 @@ use App\Http\Requests\Test\TestAttemptRequest;
 use App\Services\TestEvaluationService;
 use App\Models\Test;
 use App\Models\TestAttempt;
+use App\Repositories\TestAttemptRepository;
 
 class TestAttemptController extends Controller
 {
@@ -29,24 +30,16 @@ class TestAttemptController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(TestAttemptRequest $r, TestEvaluationService $evaluator)
-    {
+    public function store(
+        TestAttemptRequest $r,
+        TestEvaluationService $evaluator,
+        TestAttemptRepository $repo
+    ) {
         $test = Test::findOrFail($r->input('id'));
-        $results = $evaluator->evaluate($r, $test);
 
-        $userId = $r->user()->id;
-        $attempt = (TestAttempt::where('user_id', $userId)
-            ->where('test_id', $test->id)
-            ->max('attempt') ?? 0) + 1;
+        $attempt = $evaluator->evaluate($r, $test);
 
-
-        dd([
-            'user_id' => $userId,
-            'test_id' => $test->id,
-            'attempt' => $attempt,
-            'test_title' => $test->title,
-            'results' => $results,
-        ]);
+        $repo->store($attempt);
     }
 
     /**
