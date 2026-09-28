@@ -339,6 +339,7 @@ export default function Index({
                                         key={test.id}
                                         test={test}
                                         current_user_id={current_user_id}
+                                        activeTab={activeTab} // <-- Pass the tab state here
                                         onDelete={currentDeleteHandler}
                                     />
                                 ))}
