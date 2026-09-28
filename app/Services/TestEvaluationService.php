@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Test;
 use App\Models\TestAttempt;
 use App\Http\Requests\Test\TestAttemptRequest;
+use App\Models\Setting;
 
 class TestEvaluationService
 {
@@ -15,7 +16,7 @@ class TestEvaluationService
             : $test->content;
 
         $submittedAnswers = $r->input('answers', []);
-        $results = [];
+        $content = [];
 
         $maxPoints = 0;
         $userPoints = 0;
@@ -39,7 +40,7 @@ class TestEvaluationService
             $maxPoints += $value;
             $userPoints += $isCorrect ? $value : 0;
 
-            $results[$question['text']] = [
+            $content[$question['text']] = [
                 'id' => $qId,
                 'value' => $value,
                 'user_answer' => $userSelectedOption['text'] ?? null,
@@ -50,6 +51,19 @@ class TestEvaluationService
 
         $percent = (int) ceil($userPoints / $maxPoints * 100);
 
+        $gradingScale = $this->getGradingScale();
+
+        arsort($gradingScale);
+
+        $grade = 1;
+
+        foreach ($gradingScale as $gradeValue => $minimumPercent) {
+            if ($percent >= $minimumPercent) {
+                $grade = (int) $gradeValue;
+                break;
+            }
+        }
+
         return [
             'user_id' => $r->user()->id,
             'test_id' => $test->id,
@@ -57,14 +71,22 @@ class TestEvaluationService
                 $r->user()->id,
                 $test->id
             ),
-            'hasPassed' => $userPoints >= $test->minPoints,
+
+            'has_passed' => $userPoints >= $test->minPoints,
+            'content' => $content,
+
+            'user_points' => $userPoints,
             'percent' => $percent,
-            'results' => array_merge($results, [
-                'maxPoints' => $maxPoints,
-                'userPoints' => $userPoints,
-                'percent' => $percent,
-            ]),
+            'grade' => $grade,
         ];
+    }
+
+    private function getGradingScale(): array
+    {
+        return json_decode(
+            Setting::where('key', 'grading_scale')->value('value'),
+            true
+        );
     }
 
     private function getNextAttemptNumber(int $userId, int $testId): int

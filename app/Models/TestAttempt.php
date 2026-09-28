@@ -16,10 +16,11 @@ class TestAttempt extends Model
         'user_id',
         'test_id',
         'attempt',
+
         'has_passed',
         'content',
+
         'user_points',
-        'max_points',
         'percent',
         'grade',
     ];

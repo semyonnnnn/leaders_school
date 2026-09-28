@@ -8,19 +8,19 @@ use App\Models\TestAttempt;
 class TestAttemptRepository
 {
     public function store(
-        array $attempt
+        array $data
     ): TestAttempt {
-        dd($attempt);
-        $attempt = (TestAttempt::where('user_id', $userId)
-            ->where('test_id', $testId)
-            ->max('attempt') ?? 0) + 1;
-
         return TestAttempt::create([
-            'user_id' => $userId,
-            'test_id' => $testId,
-            'attempt' => $attempt,
-            'test_title' => $testTitle,
-            'results' => $results,
+            'user_id' => $data['user_id'],
+            'test_id' => $data['test_id'],
+            'attempt' => $data['attempt'],
+
+            'has_passed' => $data['has_passed'],
+            'content' => $data['content'],
+
+            'user_points' => $data['user_points'],
+            'percent' => $data['percent'],
+            'grade' => $data['grade'],
         ]);
     }
 

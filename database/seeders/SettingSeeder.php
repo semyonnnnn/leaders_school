@@ -9,9 +9,17 @@ class SettingSeeder extends Seeder
 {
     public function run(): void
     {
-        Setting::updateOrCreate(
-            ['key' => 'passing_threshold_percentage'],
-            ['value' => '0.8']
-        );
+        $settings = [
+            'passing_threshold_percentage' => '0.8',
+            'grading_scale' => '{"5":95,"4":80,"3":60,"2":40,"1":0}',
+            'max_attempts' => '3',
+        ];
+
+        foreach ($settings as $key => $value) {
+            Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value]
+            );
+        }
     }
 }

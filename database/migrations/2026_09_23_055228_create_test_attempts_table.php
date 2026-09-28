@@ -30,12 +30,12 @@ return new class extends Migration
             // not an array of attempts) — question text, user's answer,
             // correct answer, is_correct, and each question's point value.
             $table->json('content');
+            $table->unsignedTinyInteger('user_points');
 
             // 1-5 grade for this attempt, computed from earned/possible
             // points percentage in TestEvaluationService.
             $table->unsignedTinyInteger('percent');
             $table->unsignedTinyInteger('grade');
-            $table->unsignedTinyInteger('user_points');
 
             $table->timestamps();
 

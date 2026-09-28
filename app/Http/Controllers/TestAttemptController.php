@@ -37,9 +37,9 @@ class TestAttemptController extends Controller
     ) {
         $test = Test::findOrFail($r->input('id'));
 
-        $attempt = $evaluator->evaluate($r, $test);
+        $data = $evaluator->evaluate($r, $test);
 
-        $repo->store($attempt);
+        $repo->store($data);
     }
 
     /**

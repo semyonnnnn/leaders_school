@@ -19,10 +19,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 0. CREATE INITIAL SYSTEM SETTINGS
-        Setting::updateOrCreate(
-            ['key' => 'passing_threshold_percentage'],
-            ['value' => '0.8']
-        );
+        $this->call(SettingSeeder::class);
 
         // 1. ROLES (Using firstOrCreate to prevent crash if they exist)
         $rootRole    = Role::firstOrCreate(['name' => RolesEnum::Root->value]);
