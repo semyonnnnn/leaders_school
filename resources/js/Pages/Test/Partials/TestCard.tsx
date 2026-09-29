@@ -19,6 +19,8 @@ const TestCard: React.FC<TestCardProps> = ({
     const isCompletedTest = activeTab === 'completed';
     const isAvailableTest = activeTab === 'available';
 
+    console.log('test in TestCard:', test);
+
     return (
         <div className="group clip-corner relative flex flex-col justify-between border-2 border-zinc-300 bg-zinc-100/80 p-5 shadow-xs transition-all duration-150 hover:border-zinc-500 hover:bg-zinc-100">
             <div className="mb-4 flex items-center justify-between border-b-2 border-zinc-300 pb-[0.1rem]">

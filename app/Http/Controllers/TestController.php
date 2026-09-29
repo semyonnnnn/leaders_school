@@ -34,8 +34,8 @@ class TestController extends Controller
                 : Inertia::lazy(fn() => $repo->getMyTests($userId)),
 
             'completed_tests' => $activeTab === 'completed'
-                ? $repo->getPassedTests($userId)
-                : Inertia::lazy(fn() => $repo->getPassedTests($userId)),
+                ? $repo->getCompletedTests($userId)
+                : Inertia::lazy(fn() => $repo->getCompletedTests($userId)),
 
             'current_user_id' => $userId,
         ]);
@@ -47,7 +47,7 @@ class TestController extends Controller
 
         Test::create($test);
 
-        return redirect()->route('tests.index')->with('success', "Тест '{$test['title']}' успешно создан!");
+        return redirect()->route('tests.index', ['tab' => 'my'])->with('success', "Тест '{$test['title']}' успешно создан!");
     }
 
     public function destroy(int $id)
@@ -113,6 +113,6 @@ class TestController extends Controller
 
         $test->update($updateData);
 
-        return redirect()->route('tests.index')->with('success', "Тест '$test_name' успешно обновлён!");
+        return redirect()->route('tests.index', ['tab' => 'my'])->with('success', "Тест '{$data['title']}' успешно обновлён!");
     }
 }

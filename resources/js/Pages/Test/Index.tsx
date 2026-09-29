@@ -5,7 +5,7 @@ import { Pagination } from '@/components/custom/Pagination';
 import { PopUp } from '@/components/custom/PopUp';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import DeleteTestConfirmationModal from '@/Pages/Test/Partials/DeleteTestConfirmationModal';
-import { FlashProps, PaginatedTest } from '@/types';
+import { FlashProps, PageProps, PaginatedTest } from '@/types';
 import { TestCard } from './Partials/TestCard';
 import TestTabHeader from './Partials/TestTabHeader';
 
@@ -53,7 +53,7 @@ export default function Index({
     });
 
     // Directly extract flash from page props
-    const { flash } = usePage<{ flash: CustomFlashProps }>().props;
+  const { flash } = usePage<PageProps<{ flash: CustomFlashProps }>>().props;
 
     useEffect(() => {
         // Intercept either flash.success or flash.message
