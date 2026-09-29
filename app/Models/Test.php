@@ -14,62 +14,48 @@ class Test extends Model
         'title',
         'description',
         'content',
-
         'questions_count',
         'minPoints',
         'maxPoints',
-
         'is_published',
         'user_id',
     ];
 
     protected $casts = [
         'content' => 'array',
+        'created_at' => 'datetime',
     ];
-
-    // Automatically append these computed attributes whenever the model is serialized
-    protected $appends = ['is_owner', 'has_passed'];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function passedUsers()
-    {
-        return $this->belongsToMany(User::class, 'test_user')
-            ->withTimestamps();
-    }
     public function testAttempts()
     {
         return $this->hasMany(TestAttempt::class);
     }
 
-    // Override the default created_at attribute to return the localized Russian string directly
-    public function getCreatedAtAttribute($value)
+    public function getFormattedCreatedAtAttribute(): ?string
     {
-        if (!$value) {
+        if (!$this->created_at) {
             return null;
         }
 
-        return \Carbon\Carbon::parse($value)->translatedFormat('j F Y', 'ru');
+        return $this->created_at->locale('ru')->translatedFormat('j F Y');
     }
 
-    // Accessor: Check if the currently authenticated user owns this test
-    public function getIsOwnerAttribute(): bool
-    {
-        return Auth::id() === $this->user_id;
-    }
-
-    // Accessor: Check if a non-owner has already completed this test
     public function getHasPassedAttribute(): bool
     {
         $user = Auth::user();
 
-        if (!$user || $this->is_owner) {
+        if (!$user || $this->user_id === $user->id) {
             return false;
         }
 
-        return $this->passedUsers()->where('user_id', $user->id)->exists();
+        return $this->testAttempts()
+            ->where('user_id', $user->id)
+            ->where('is_passed', true)
+            ->exists();
     }
 }

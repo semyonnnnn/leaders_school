@@ -1,84 +1,119 @@
 import ApplicationLogo from '@/components/custom/ApplicationLogo';
+import { PopUp } from '@/components/custom/PopUp';
+import ResponsiveNavLink from '@/components/custom/ResponsiveNavLink';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { router, Link, usePage } from '@inertiajs/react';
-import ResponsiveNavLink from '@/components/custom/ResponsiveNavLink';
-import { PropsWithChildren, ReactNode, useState } from 'react';
+} from '@/components/ui/dropdown-menu';
+import { FlashProps } from '@/types';
+import { Link, router, usePage } from '@inertiajs/react';
+import { PropsWithChildren, ReactNode, useEffect, useState } from 'react';
 
-export default function Authenticated({ header, children }: PropsWithChildren<{ header?: ReactNode }>) {
-    // @ts-ignore
-    const { auth } = usePage().props;
+export default function Authenticated({
+    header,
+    children,
+}: PropsWithChildren<{ header?: ReactNode }>) {
+    const { auth, flash } = usePage().props as {
+        auth: any;
+        flash?: FlashProps;
+    };
     const user = auth.user;
-    const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
+    const [showingNavigationDropdown, setShowingNavigationDropdown] =
+        useState(false);
+
+    // Centralized handle for ubiquitous success notifications
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (flash?.success) {
+            setSuccessMessage(flash.success);
+            const timer = setTimeout(() => {
+                setSuccessMessage(null);
+            }, 7000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash]);
 
     return (
-        <div className="min-h-screen  bg-[#121110]/70 text-zinc-900 font-mono selection:bg-zinc-900 selection:text-zinc-100">
+        <div className="min-h-screen bg-[#121110]/70 font-mono text-zinc-900 selection:bg-zinc-900 selection:text-zinc-100">
+            {/* Success Flash Popup */}
+            {successMessage && (
+                <PopUp
+                    message={successMessage}
+                    handleClick={() => setSuccessMessage(null)}
+                />
+            )}
+
             {/* TopAppBar - Core Tactical Header Chassis */}
-            <header className="fixed top-0 w-full z-40 bg-zinc-50 border-b border-zinc-300 h-20 flex justify-between items-center px-4 sm:px-8 select-none">
+            <header className="fixed top-0 z-40 flex h-20 w-full items-center justify-between border-b border-zinc-300 bg-zinc-50 px-4 select-none sm:px-8">
+                <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] bg-size-[14px_14px] opacity-[0.02]"></div>
 
-                {/* Background Blueprint Matrix Grid Pattern for Top Bar */}
-                <div className="absolute inset-0 opacity-[0.02] bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] bg-size-[14px_14px] pointer-events-none z-0"></div>
-
-                <div className="flex items-center gap-6 relative z-10">
-                    {/* Logo Area inside Tactical Frame */}
-                    <Link href="/" className="flex items-center gap-2 group p-1 border border-transparent hover:border-zinc-400 clip-corner transition-all">
+                <div className="relative z-10 flex items-center gap-6">
+                    <Link
+                        href="/"
+                        className="group clip-corner flex items-center gap-2 border border-transparent p-1 transition-all hover:border-zinc-400"
+                    >
                         <ApplicationLogo />
                     </Link>
 
-                    {/* Desktop Navigation - System Links */}
-                    <nav className="hidden lg:flex items-center gap-1">
-                        <MenuItem href_route='dashboard' name='главная' />
-                        <MenuItem href_route='tests.index' name='тесты' />
-                        <MenuItem href_route='materials.index' name='материалы' />
-                        <MenuItem href_route='users.index' name='группа' />
+                    <nav className="hidden items-center gap-1 lg:flex">
+                        <MenuItem href_route="dashboard" name="главная" />
+                        <MenuItem href_route="tests.index" name="тесты" />
+                        <MenuItem
+                            href_route="materials.index"
+                            name="материалы"
+                        />
+                        <MenuItem href_route="users.index" name="группа" />
                     </nav>
                 </div>
 
-                {/* Actions & Profile Operative Node */}
-                <div className="flex items-center gap-4 relative z-10">
+                <div className="relative z-10 flex items-center gap-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger className="focus:outline-none">
-                            {/* User Plate Layout with Black Left Boundary Accent Tag */}
-                            <div className="group flex items-center gap-3 p-2 bg-zinc-100 border border-zinc-300 hover:bg-zinc-200/80 hover:border-zinc-400 transition-all duration-150 clip-corner cursor-pointer text-left">
-                                {/* Avatar Box - Square Tactical Enclosure */}
-                                <div className="w-9 h-9 border border-zinc-400 bg-zinc-300 shrink-0 overflow-hidden clip-corner">
+                            <div className="group clip-corner flex cursor-pointer items-center gap-3 border border-zinc-300 bg-zinc-100 p-2 text-left transition-all duration-150 hover:border-zinc-400 hover:bg-zinc-200/80">
+                                <div className="clip-corner h-9 w-9 shrink-0 overflow-hidden border border-zinc-400 bg-zinc-300">
                                     <img
-                                        src={"https://lh3.googleusercontent.com/aida-public/AB6AXuCjMtRq3WvjElWL0jcAkICvSx71wBX_Yakrq_-bjnTqpa6M6b0U5WM7Hs4d6F9vdeahqHDkByDO5nEEOeo60Azh_EoYbNTRAyzglFQ9u1pApuQq6Dy9AStG7KzDEzb4TTig15nUmKTv5-esspX2ywN5jlyb1qIkmrf7WDyiumoGIli27aBioLPS5jUy-wCrj9N-nlNbuCqEdDDk-EV54n7OLitel_FQ9reMD-vVnMFpw7ZmhBh72NMJeCzPQmawJTqMiKK1d59Kk1pP"}
+                                        src={
+                                            'https://lh3.googleusercontent.com/aida-public/AB6AXuCjMtRq3WvjElWL0jcAkICvSx71wBX_Yakrq_-bjnTqpa6M6b0U5WM7Hs4d6F9vdeahqHDkByDO5nEEOeo60Azh_EoYbNTRAyzglFQ9u1pApuQq6Dy9AStG7KzDEzb4TTig15nUmKTv5-esspX2ywN5jlyb1qIkmrf7WDyiumoGIli27aBioLPS5jUy-wCrj9N-nlNbuCqEdDDk-EV54n7OLitel_FQ9reMD-vVnMFpw7ZmhBh72NMJeCzPQmawJTqMiKK1d59Kk1pP'
+                                        }
                                         alt={user.name}
-                                        className="select-none w-full h-full object-cover filter grayscale contrast-125"
+                                        className="h-full w-full object-cover contrast-125 grayscale filter select-none"
                                     />
                                 </div>
-                                <div className="hidden md:block pr-2 border-l-2 border-l-zinc-400 pl-2">
-                                    <p className="text-xs font-bold text-zinc-900 uppercase tracking-wide leading-none mb-1">
+                                <div className="hidden border-l-2 border-l-zinc-400 pr-2 pl-2 md:block">
+                                    <p className="mb-1 text-xs leading-none font-bold tracking-wide text-zinc-900 uppercase">
                                         {user.name}
                                     </p>
-                                    <p className="text-[10px] text-zinc-500 font-bold tracking-widest leading-none uppercase">
+                                    <p className="text-[10px] leading-none font-bold tracking-widest text-zinc-500 uppercase">
                                         [{user.roles?.[0] || 'OPERATOR'}]
                                     </p>
                                 </div>
                             </div>
                         </DropdownMenuTrigger>
 
-                        {/* Dropdown Menu - Styled as Terminal Box */}
-                        <DropdownMenuContent align="end" className="w-56 mt-2 bg-zinc-50 border border-zinc-400 rounded-none clip-corner p-1 shadow-none font-mono">
+                        <DropdownMenuContent
+                            align="end"
+                            className="clip-corner mt-2 w-56 rounded-none border border-zinc-400 bg-zinc-50 p-1 font-mono shadow-none"
+                        >
                             <DropdownMenuItem
                                 // @ts-ignore
                                 onClick={() => router.post(route('logout'))}
-                                className="w-full text-left text-xs font-bold uppercase tracking-widest text-red-700 hover:bg-red-50 focus:bg-red-50 focus:text-red-800 rounded-none p-2.5 cursor-pointer transition-colors border border-transparent focus:border-red-300"
+                                className="w-full cursor-pointer rounded-none border border-transparent p-2.5 text-left text-xs font-bold tracking-widest text-red-700 uppercase transition-colors hover:bg-red-50 focus:border-red-300 focus:bg-red-50 focus:text-red-800"
                             >
                                 // СБРОС_СЕССИИ (ВЫЙТИ)
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    {/* Mobile Menu Toggle - Technical Trigger Node */}
                     <button
-                        onClick={() => setShowingNavigationDropdown(!showingNavigationDropdown)}
-                        className="lg:hidden w-9 h-9 flex items-center justify-center bg-zinc-100 border border-zinc-300 text-zinc-800 font-bold hover:bg-zinc-950 hover:text-zinc-100 transition-colors clip-corner cursor-pointer"
+                        onClick={() =>
+                            setShowingNavigationDropdown(
+                                !showingNavigationDropdown,
+                            )
+                        }
+                        className="clip-corner flex h-9 w-9 cursor-pointer items-center justify-center border border-zinc-300 bg-zinc-100 font-bold text-zinc-800 transition-colors hover:bg-zinc-950 hover:text-zinc-100 lg:hidden"
                     >
                         <span className="text-sm font-black">
                             {showingNavigationDropdown ? '[X]' : '[=]'}
@@ -87,40 +122,47 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                 </div>
             </header>
 
-            {/* Mobile Navigation Dropdown Framework */}
-            <div className={`lg:hidden fixed top-20 w-full z-30 bg-zinc-50 border-b border-zinc-300 transition-all duration-200 font-mono ${showingNavigationDropdown ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
-                <div className="p-4 space-y-2 bg-zinc-100/80">
-                    <ResponsiveNavLink href="#" active={false}>// ПРОЕКТ</ResponsiveNavLink>
-                    <ResponsiveNavLink href="#" active={false}>// ОБУЧЕНИЕ</ResponsiveNavLink>
-                    <ResponsiveNavLink href="#" active={true}>// ГРУППА</ResponsiveNavLink>
+            <div
+                className={`fixed top-20 z-30 w-full border-b border-zinc-300 bg-zinc-50 font-mono transition-all duration-200 lg:hidden ${showingNavigationDropdown ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0'}`}
+            >
+                <div className="space-y-2 bg-zinc-100/80 p-4">
+                    <ResponsiveNavLink href="#" active={false}>
+                        // ПРОЕКТ
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href="#" active={false}>
+                        // ОБУЧЕНИЕ
+                    </ResponsiveNavLink>
+                    <ResponsiveNavLink href="#" active={true}>
+                        // ГРУППА
+                    </ResponsiveNavLink>
                 </div>
             </div>
 
-            {/* Page Content Chassis */}
-            <main className="pt-28 pb-12 relative z-10">
+            <main className="relative z-10 pt-28 pb-12">
                 {header && (
-                    <div className="mx-auto px-4 sm:px-8 mb-6">
-                        {/* Dynamic Subheader Module Frame */}
-                        <div className="p-4 bg-zinc-300 border border-zinc-300 clip-corner relative overflow-hidden">
-                            <div className="absolute inset-0 opacity-[0.01] bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] bg-size-[10px_10px] pointer-events-none"></div>
-                            <div className="relative z-10 text-zinc-900 font-bold uppercase tracking-wider text-sm">
+                    <div className="mx-auto mb-6 px-4 sm:px-8">
+                        <div className="clip-corner relative overflow-hidden border border-zinc-300 bg-zinc-300 p-4">
+                            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] bg-size-[10px_10px] opacity-[0.01]"></div>
+                            <div className="relative z-10 text-sm font-bold tracking-wider text-zinc-900 uppercase">
                                 {header}
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Core Children Slot Injection */}
-                <div className="mx-auto px-4 sm:px-8">
-                    {children}
-                </div>
+                <div className="mx-auto px-4 sm:px-8">{children}</div>
             </main>
         </div>
     );
 }
 
-const MenuItem = ({ href_route, name }: { href_route: string, name: string }) => {
-    // Extract base resource name to construct wildcard (e.g., 'materials.index' -> 'materials.*')
+const MenuItem = ({
+    href_route,
+    name,
+}: {
+    href_route: string;
+    name: string;
+}) => {
     const routePattern = href_route.includes('.')
         ? `${href_route.split('.')[0]}.*`
         : href_route;
@@ -130,14 +172,20 @@ const MenuItem = ({ href_route, name }: { href_route: string, name: string }) =>
     return (
         <Link
             href={route(href_route)}
-            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition-colors clip-corner ${isCurrent
-                ? 'border-b-amber-600 text-black border-b-2 border-x border-t border-zinc-300 bg-amber-500/10'
-                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-300/70'
-                }`}
+            className={`clip-corner px-3 py-1.5 text-xs font-bold tracking-widest uppercase transition-colors ${
+                isCurrent
+                    ? 'border-x border-t border-b-2 border-zinc-300 border-b-amber-600 bg-amber-500/10 text-black'
+                    : 'text-zinc-600 hover:bg-zinc-300/70 hover:text-zinc-950'
+            }`}
         >
-            <span className={isCurrent ? 'text-amber-600 font-black' : ''}>[ </span>
+            <span className={isCurrent ? 'font-black text-amber-600' : ''}>
+                [{' '}
+            </span>
             {name}
-            <span className={isCurrent ? 'text-amber-600 font-black' : ''}> ]</span>
+            <span className={isCurrent ? 'font-black text-amber-600' : ''}>
+                {' '}
+                ]
+            </span>
         </Link>
     );
 };

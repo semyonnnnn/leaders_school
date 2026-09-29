@@ -1,109 +1,77 @@
-import { Head, usePage } from "@inertiajs/react";
-import { useState, useEffect } from "react";
-//////////////////////////////////////////////////////
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { User, PageProps, PaginatedDataProps, UserIndexProps, FlashProps } from "@/types";
-import { Pagination } from "@/components/custom/Pagination";
-import { UploadUsersPanel } from "./UploadUsersPanel";
-import { PasswordGenerator } from "../Material/Partials/PasswordGenerator";
-import { PopUp } from "@/components/custom/PopUp";
-import { ErrorTelemetry } from "./ErrorTelemetry";
-import { EditUserModal } from "./EditUserModal";
+import { ErrorTelemetry } from '@/components/custom/ErrorTelemetry';
+import { Pagination } from '@/components/custom/Pagination';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { FlashProps, PaginatedDataProps, User, UserIndexProps } from '@/types';
+import { Head, usePage } from '@inertiajs/react';
 import axios from 'axios';
-
+import { useEffect, useState } from 'react';
+import { PasswordGenerator } from '../Material/Partials/PasswordGenerator';
+import { EditUserModal } from './EditUserModal';
+import { UploadUsersPanel } from './UploadUsersPanel';
 
 export default function Index({ auth, users, roleLabels }: UserIndexProps) {
-  // 1. Normalize the users data so the component doesn't care if it's paginated or a raw array
-  const isPaginated = !Array.isArray(users);
-  const userList = isPaginated ? (users as PaginatedDataProps<User>).data : (users as User[]);
-  const totalCount = isPaginated ? (users as PaginatedDataProps<User>).total : (users as User[]).length;
+    // Normalize the users data so the component doesn't care if it's paginated or a raw array
+    const isPaginated = !Array.isArray(users);
+    const userList = isPaginated
+        ? (users as PaginatedDataProps<User>).data
+        : (users as User[]);
+    const totalCount = isPaginated
+        ? (users as PaginatedDataProps<User>).total
+        : (users as User[]).length;
 
-  const [message, setMessage] = useState<FlashProps>({
-    success: null,
-    error: {
-      summary: null,
-      details: null,
-    }
-  });
+    // Bespoke error telemetry state isolated to this view
+    const [errorState, setErrorState] = useState<{
+        summary: string | null;
+        details: string | null;
+    }>({
+        summary: null,
+        details: null,
+    });
 
-  // METRIC HOOKS: Track active data stream and loading indicators
-  const [backendDataLocal, setBackendDataLocal] = useState<any | null>(null);
-  const [loadingUserId, setLoadingUserId] = useState<number | null>(null);
+    // METRIC HOOKS: Track active data stream and loading indicators
+    const [backendDataLocal, setBackendDataLocal] = useState<any | null>(null);
+    const [loadingUserId, setLoadingUserId] = useState<number | null>(null);
 
-  // 2. Safe check for roles using optional chaining
-  const userRole = auth.user?.roles?.[0]?.toLowerCase();
-  const canEdit = userRole === 'root' || userRole === 'admin';
+    // Safe check for roles using optional chaining
+    const userRole = auth.user?.roles?.[0]?.toLowerCase();
+    const canEdit = userRole === 'root' || userRole === 'admin';
 
-  const flash = (usePage().props as any).flash as FlashProps;
+    const flash = (usePage().props as any).flash as FlashProps;
 
-  // useEffect(() => {
-  //   console.log('backendDataLocal:', backendDataLocal)
-  // }, [backendDataLocal]);
+    useEffect(() => {
+        if (flash?.error?.summary || flash?.error?.details) {
+            setErrorState({
+                summary: flash.error.summary ?? null,
+                details: flash.error.details ?? null,
+            });
+        }
+    }, [flash]);
 
+    const handleFetchAndOpenModal = (userId: number) => {
+        setLoadingUserId(userId);
 
-  const handleFetchAndOpenModal = (userId: number) => {
-    setLoadingUserId(userId);
+        axios
+            .get(route('users.edit', userId))
+            .then((response) => {
+                setBackendDataLocal(response.data);
+                setLoadingUserId(null);
+            })
+            .catch(() => {
+                setLoadingUserId(null);
+            });
+    };
 
-    // Quiet hunter fetch data, URL bar stay safe on Index list!
-    axios.get(route("users.edit", userId))
-      .then(response => {
-        // response.data has all the shiny rock properties
-        setBackendDataLocal(response.data);
-        setLoadingUserId(null);
-        // console.error("AXIOS_CORE_CRASH:", error.response?.data || error.message);
-      })
-      .catch(() => {
-        setLoadingUserId(null);
-      });
-  };
+    const handleCloseModal = () => {
+        setBackendDataLocal(null); // Flushes cache, instantly dropping modal from DOM tree
+    };
 
-  const handleCloseModal = () => {
-    setBackendDataLocal(null); // Flushes cache, instantly dropping modal from DOM tree
-  };
+    return (
+        <AuthenticatedLayout>
+            <Head title="Пользователи" />
 
-  useEffect(() => {
-    const isSuccessEmpty = flash.success === null;
-    const isErrorEmpty = !flash?.error?.summary && !flash?.error?.details;
-
-    if (isSuccessEmpty && isErrorEmpty) return;
-
-    setMessage(prev => ({
-      success: flash.success,
-      error: isErrorEmpty ? prev.error : {
-        summary: flash.error.summary,
-        details: flash.error.details
-      }
-    }));
-
-    console.log(flash);
-
-    if (flash.success) {
-      const timer = setTimeout(() => {
-        setMessage(prev => ({
-          ...prev,
-          success: null,
-        }));
-      }, 7000);
-      return () => clearTimeout(timer);
-    }
-  }, [flash]);
-
-  return (
-    <AuthenticatedLayout>
-      <Head title="Пользователи" />
-      {message.success && <PopUp message={message.success} handleClick={() => {
-        setMessage({
-          success: null,
-          error: {
-            summary: null,
-            details: null,
-          }
-        });
-      }} />}
-
-      <main
-        style={{
-          backgroundImage: `
+            <div
+                style={{
+                    backgroundImage: `
             linear-gradient(90deg, rgba(24,24,27,0.08) 1px, transparent 1px),
             linear-gradient(90deg, rgba(24,24,27,0.1) 1px, transparent 1px),
             linear-gradient(0deg, rgba(24,24,27,0.08) 1px, transparent 1px),
@@ -112,110 +80,136 @@ export default function Index({ auth, users, roleLabels }: UserIndexProps) {
             linear-gradient(90deg, transparent 45%, #d4d4d8 45%, #d4d4d8 46%, transparent 46%),
             linear-gradient(0deg, transparent 72%, #d4d4d8 72%, #d4d4d8 73%, transparent 73%)
           `,
-          backgroundSize: '137px 100%, 43px 100%, 100% 97px, 100% 53px, 100% 19px, 100% 100%, 100% 100%',
-          backgroundPosition: '0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0'
-        }}
-        className="min-h-screen bg-zinc-300 p-4 md:p-8 flex flex-col gap-8 relative select-none font-mono"
-      >
-        <div className="relative p-6 bg-zinc-50 border border-zinc-300/90 overflow-hidden rounded-xs z-10 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-          <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] bg-size-[12px_12px] pointer-events-none z-0"></div>
+                    backgroundSize:
+                        '137px 100%, 43px 100%, 100% 97px, 100% 53px, 100% 19px, 100% 100%, 100% 100%',
+                    backgroundPosition: '0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0',
+                }}
+                className="relative flex min-h-screen flex-col gap-8 bg-zinc-300 p-4 font-mono select-none md:p-8"
+            >
+                <div className="relative z-10 overflow-hidden rounded-xs border border-zinc-300/90 bg-zinc-50 p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+                    <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] bg-size-[12px_12px] opacity-[0.03]"></div>
 
-          <div className="flex justify-between items-center mb-6 pb-3 border-b border-zinc-950 relative z-10">
-            <h1 className="text-xl font-black text-zinc-900 uppercase tracking-widest">
-              [ РЕЕСТР_СИСТЕМНЫХ_СУБЪЕКТОВ ]
-            </h1>
-            <div className="text-[10px] text-zinc-500 font-bold tracking-wider bg-zinc-200 border border-zinc-300/70 px-2 py-1">
-              [ {totalCount}_СУБЪЕКТОВ_В_СИСТЕМЕ ]
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 relative z-10">
-            {userList?.map((user, index) => {
-              const isThisUserLoading = loadingUserId === user.id;
-
-              return (
-                <div
-                  key={user.id}
-                  className="group flex flex-col bg-white/80 backdrop-blur-md border border-zinc-200 p-2 hover:bg-white hover:border-amber-300 hover:shadow-[0_4px_15px_rgba(245,158,11,0.1)] transition-all duration-300 relative overflow-hidden"
-                >
-                  <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-zinc-200 group-hover:bg-amber-500 transition-colors duration-300"></div>
-                  <div className="absolute inset-0 opacity-[0.02] bg-[radial-gradient(#000_1px,transparent_1px)] bg-size-[8px_8px] pointer-events-none z-0"></div>
-                  <div className="absolute top-1 right-1 w-2 h-2 border-t-2 border-r-2 border-zinc-200 group-hover:border-amber-400 transition-colors z-10"></div>
-                  <div className="absolute bottom-1 right-1 w-2 h-2 border-b-2 border-r-2 border-zinc-200 group-hover:border-amber-400 transition-colors z-10"></div>
-
-                  <div className="flex justify-between items-start mb-1.5 relative z-10 pl-2">
-                    <div>
-                      <h3 className="text-sm font-black text-zinc-800 uppercase tracking-widest group-hover:text-amber-900 transition-colors leading-none">
-                        {user.name}
-                      </h3>
-                      <p className="text-[10px] text-zinc-400 uppercase tracking-widest mt-0.5 font-medium leading-tight">
-                        {user.email}
-                      </p>
+                    <div className="relative z-10 mb-6 flex items-center justify-between border-b border-zinc-950 pb-3">
+                        <h1 className="text-xl font-black tracking-widest text-zinc-900 uppercase">
+                            [ РЕЕСТР_СИСТЕМНЫХ_СУБЪЕКТОВ ]
+                        </h1>
+                        <div className="border border-zinc-300/70 bg-zinc-200 px-2 py-1 text-[10px] font-bold tracking-wider text-zinc-500">
+                            [ {totalCount}_СУБЪЕКТОВ_В_СИСТЕМЕ ]
+                        </div>
                     </div>
-                    <div className="text-[9px] font-bold text-amber-700 bg-amber-50/50 border border-amber-100/50 px-1.5 py-px flex items-center gap-1.5 shadow-sm">
-                      <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse"></div>
-                      SYS_ID.{String(user.id).padStart(totalCount.toString().length, '0')}
+
+                    <div className="relative z-10 grid grid-cols-1 gap-2 md:grid-cols-2">
+                        {userList?.map((user) => {
+                            const isThisUserLoading = loadingUserId === user.id;
+
+                            return (
+                                <div
+                                    key={user.id}
+                                    className="group relative flex flex-col overflow-hidden border border-zinc-200 bg-white/80 p-2 backdrop-blur-md transition-all duration-300 hover:border-amber-300 hover:bg-white hover:shadow-[0_4px_15px_rgba(245,158,11,0.1)]"
+                                >
+                                    <div className="absolute top-0 bottom-0 left-0 w-0.75 bg-zinc-200 transition-colors duration-300 group-hover:bg-amber-500"></div>
+                                    <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(#000_1px,transparent_1px)] bg-size-[8px_8px] opacity-[0.02]"></div>
+                                    <div className="absolute top-1 right-1 z-10 h-2 w-2 border-t-2 border-r-2 border-zinc-200 transition-colors group-hover:border-amber-400"></div>
+                                    <div className="absolute right-1 bottom-1 z-10 h-2 w-2 border-r-2 border-b-2 border-zinc-200 transition-colors group-hover:border-amber-400"></div>
+
+                                    <div className="relative z-10 mb-1.5 flex items-start justify-between pl-2">
+                                        <div>
+                                            <h3 className="text-sm leading-none font-black tracking-widest text-zinc-800 uppercase transition-colors group-hover:text-amber-900">
+                                                {user.name}
+                                            </h3>
+                                            <p className="mt-0.5 text-[10px] leading-tight font-medium tracking-widest text-zinc-400 uppercase">
+                                                {user.email}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 border border-amber-100/50 bg-amber-50/50 px-1.5 py-px text-[9px] font-bold text-amber-700 shadow-sm">
+                                            <div className="h-1 w-1 animate-pulse rounded-full bg-amber-500"></div>
+                                            SYS_ID.
+                                            {String(user.id).padStart(
+                                                totalCount.toString().length,
+                                                '0',
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="relative z-10 mt-auto flex items-center justify-between border-t border-zinc-100 pt-1.5 pl-2">
+                                        <span className="text-[9px] leading-none font-bold tracking-widest text-zinc-400 uppercase">
+                                            LVL //{' '}
+                                            <span className="ml-1 font-black text-zinc-800">
+                                                {roleLabels[
+                                                    user?.roles?.[0]
+                                                ]?.toUpperCase() || 'N/A'}
+                                            </span>
+                                        </span>
+
+                                        {canEdit && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleFetchAndOpenModal(
+                                                        user.id,
+                                                    )
+                                                }
+                                                disabled={
+                                                    loadingUserId !== null
+                                                }
+                                                className="group/btn relative flex cursor-pointer items-center overflow-hidden border border-zinc-300 bg-zinc-100 px-6 py-1.5 text-[9px] leading-none font-bold tracking-[0.2em] text-zinc-600 uppercase transition-colors duration-300 hover:border-amber-500 hover:bg-white hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <span className="relative z-10 block">
+                                                    {isThisUserLoading
+                                                        ? '[ СИНХРОНИЗАЦИЯ... ]'
+                                                        : '[ РЕДАКТИРОВАТЬ ]'}
+                                                </span>
+                                                <div className="absolute inset-0 z-0 -translate-x-full bg-amber-50 transition-transform duration-300 ease-out group-hover/btn:translate-x-0"></div>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                  </div>
 
-                  <div className="flex justify-between items-center mt-auto pt-1.5 border-t border-zinc-100 relative z-10 pl-2">
-                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest leading-none">
-                      LVL // <span className="text-zinc-800 font-black ml-1">{roleLabels[user?.roles?.[0]]?.toUpperCase() || 'N/A'}</span>
-                    </span>
-
-                    {canEdit && (
-                      <button
-                        type="button"
-                        onClick={() => handleFetchAndOpenModal(user.id)}
-                        disabled={loadingUserId !== null}
-                        className="relative px-6 py-1.5 bg-zinc-100 border border-zinc-300 text-zinc-600 text-[9px] font-bold uppercase tracking-[0.2em] overflow-hidden group/btn hover:border-amber-500 hover:text-amber-700 hover:bg-white transition-colors duration-300 leading-none flex items-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <span className="relative z-10 block">
-                          {isThisUserLoading ? "[ СИНХРОНИЗАЦИЯ... ]" : "[ РЕДАКТИРОВАТЬ ]"}
-                        </span>
-                        <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-0 bg-amber-50 transition-transform duration-300 ease-out z-0"></div>
-                      </button>
+                    {isPaginated && (
+                        <Pagination
+                            links={(users as PaginatedDataProps<User>).links}
+                            current_page={
+                                (users as PaginatedDataProps<User>).current_page
+                            }
+                            last_page={
+                                (users as PaginatedDataProps<User>).last_page
+                            }
+                            total={(users as PaginatedDataProps<User>).total}
+                        />
                     )}
-                  </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {isPaginated && (
-            <Pagination
-              links={(users as PaginatedDataProps<User>).links}
-              current_page={(users as PaginatedDataProps<User>).current_page}
-              last_page={(users as PaginatedDataProps<User>).last_page}
-              total={(users as PaginatedDataProps<User>).total}
-            />
-          )}
-        </div>
+                <div className="flex gap-4">
+                    <UploadUsersPanel />
+                    <PasswordGenerator />
+                </div>
 
-        <div className="flex gap-4">
-          <UploadUsersPanel />
-          <PasswordGenerator />
-        </div>
+                {/* Error Telemetry rendered within Index page hierarchy */}
+                {errorState.details && (
+                    <ErrorTelemetry
+                        summary={errorState.summary}
+                        details={errorState.details}
+                        onClear={() => {
+                            setErrorState({
+                                summary: null,
+                                details: null,
+                            });
+                        }}
+                    />
+                )}
+            </div>
 
-        {message?.error?.details && <ErrorTelemetry summary={message?.error?.summary} details={message?.error?.details} onClear={() => {
-          setMessage({
-            ...flash,
-            error: {
-              details: null,
-              summary: null
-            }
-          });
-        }} />}
-      </main>
-
-      {/* PORTAL INTERCEPT: Renders modal overlay frame when activeUser payload data cache arrives */}
-      {backendDataLocal && (
-        <EditUserModal
-          isOpen={true}
-          onClose={handleCloseModal}
-          backendData={backendDataLocal}
-        />
-      )}
-    </AuthenticatedLayout>
-  );
+            {/* PORTAL INTERCEPT: Renders modal overlay frame when activeUser payload data cache arrives */}
+            {backendDataLocal && (
+                <EditUserModal
+                    isOpen={true}
+                    onClose={handleCloseModal}
+                    backendData={backendDataLocal}
+                />
+            )}
+        </AuthenticatedLayout>
+    );
 }

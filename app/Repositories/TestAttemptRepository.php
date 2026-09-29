@@ -43,7 +43,7 @@ class TestAttemptRepository
     {
         return Test::select(['id', 'title', 'description', 'user_id', 'questions_count', 'created_at'])
             ->where('user_id', '!=', $userId)
-            ->whereDoesntHave('passedUsers', fn($q) => $q->where('user_id', $userId))
+            ->whereDoesntHave('testAttempts', fn($q) => $q->where('user_id', $userId))
             ->latest()
             ->orderBy('id', 'desc')
             ->paginate(6, ['*'], 'available_page');

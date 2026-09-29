@@ -40,6 +40,8 @@ class TestAttemptController extends Controller
         $data = $evaluator->evaluate($r, $test);
 
         $repo->store($data);
+
+        return redirect()->route('tests.index', ['tab' => 'completed'])->with('message', 'Horray~');
     }
 
     /**
