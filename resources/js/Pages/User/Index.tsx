@@ -1,6 +1,6 @@
-import { ErrorTelemetry } from '@/components/custom/ErrorTelemetry';
 import { Pagination } from '@/components/custom/Pagination';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { ErrorTelemetry } from '@/Pages/User/ErrorTelemetry';
 import { FlashProps, PaginatedDataProps, User, UserIndexProps } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import axios from 'axios';
@@ -10,7 +10,6 @@ import { EditUserModal } from './EditUserModal';
 import { UploadUsersPanel } from './UploadUsersPanel';
 
 export default function Index({ auth, users, roleLabels }: UserIndexProps) {
-    // Normalize the users data so the component doesn't care if it's paginated or a raw array
     const isPaginated = !Array.isArray(users);
     const userList = isPaginated
         ? (users as PaginatedDataProps<User>).data
@@ -19,26 +18,31 @@ export default function Index({ auth, users, roleLabels }: UserIndexProps) {
         ? (users as PaginatedDataProps<User>).total
         : (users as User[]).length;
 
-    // Bespoke error telemetry state isolated to this view
     const [errorState, setErrorState] = useState<{
         summary: string | null;
-        details: string | null;
+        details: string[] | null;
     }>({
         summary: null,
         details: null,
     });
 
-    // METRIC HOOKS: Track active data stream and loading indicators
+    const [infoMessage, setInfoMessage] = useState<string | null>(null);
     const [backendDataLocal, setBackendDataLocal] = useState<any | null>(null);
     const [loadingUserId, setLoadingUserId] = useState<number | null>(null);
 
-    // Safe check for roles using optional chaining
     const userRole = auth.user?.roles?.[0]?.toLowerCase();
     const canEdit = userRole === 'root' || userRole === 'admin';
 
     const flash = (usePage().props as any).flash as FlashProps;
 
     useEffect(() => {
+        // Intercept incoming flash notifications
+        if (flash?.message) {
+            setInfoMessage(flash.message);
+        } else if (flash?.success) {
+            setInfoMessage(flash.success);
+        }
+
         if (flash?.error?.summary || flash?.error?.details) {
             setErrorState({
                 summary: flash.error.summary ?? null,
@@ -62,7 +66,7 @@ export default function Index({ auth, users, roleLabels }: UserIndexProps) {
     };
 
     const handleCloseModal = () => {
-        setBackendDataLocal(null); // Flushes cache, instantly dropping modal from DOM tree
+        setBackendDataLocal(null);
     };
 
     return (
@@ -86,6 +90,20 @@ export default function Index({ auth, users, roleLabels }: UserIndexProps) {
                 }}
                 className="relative flex min-h-screen flex-col gap-8 bg-zinc-300 p-4 font-mono select-none md:p-8"
             >
+                {/* System notification banner for ephemeral flash messages */}
+                {infoMessage && (
+                    <div className="relative z-10 flex items-center justify-between border border-emerald-500/80 bg-emerald-950/90 p-3 text-xs text-emerald-400 shadow-lg">
+                        <div>[ SYS_NOTIF // {infoMessage} ]</div>
+                        <button
+                            type="button"
+                            onClick={() => setInfoMessage(null)}
+                            className="cursor-pointer border border-emerald-500/50 px-2 py-0.5 text-[10px] uppercase transition-colors hover:bg-emerald-500 hover:text-emerald-950"
+                        >
+                            [ ЗАКРЫТЬ ]
+                        </button>
+                    </div>
+                )}
+
                 <div className="relative z-10 overflow-hidden rounded-xs border border-zinc-300/90 bg-zinc-50 p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
                     <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] bg-size-[12px_12px] opacity-[0.03]"></div>
 
@@ -178,6 +196,7 @@ export default function Index({ auth, users, roleLabels }: UserIndexProps) {
                                 (users as PaginatedDataProps<User>).last_page
                             }
                             total={(users as PaginatedDataProps<User>).total}
+                            only="users"
                         />
                     )}
                 </div>
@@ -187,8 +206,7 @@ export default function Index({ auth, users, roleLabels }: UserIndexProps) {
                     <PasswordGenerator />
                 </div>
 
-                {/* Error Telemetry rendered within Index page hierarchy */}
-                {errorState.details && (
+                {errorState.summary && (
                     <ErrorTelemetry
                         summary={errorState.summary}
                         details={errorState.details}
@@ -202,7 +220,6 @@ export default function Index({ auth, users, roleLabels }: UserIndexProps) {
                 )}
             </div>
 
-            {/* PORTAL INTERCEPT: Renders modal overlay frame when activeUser payload data cache arrives */}
             {backendDataLocal && (
                 <EditUserModal
                     isOpen={true}

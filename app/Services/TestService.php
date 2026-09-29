@@ -17,7 +17,6 @@ class TestService
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'content' => $questions,
-            'questions_count' => count($questions),
             'minPoints' => $minPoints,
             'maxPoints' => $maxPoints,
             'user_id' => Auth::id(),

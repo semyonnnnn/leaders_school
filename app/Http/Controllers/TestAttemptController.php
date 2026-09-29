@@ -41,7 +41,7 @@ class TestAttemptController extends Controller
 
         $repo->store($data);
 
-        return redirect()->route('tests.index', ['tab' => 'completed'])->with('message', 'Horray~');
+        return redirect()->route('tests.index', ['tab' => 'completed'])->with('message', "Тест '$test->title' пройден!");
     }
 
     /**

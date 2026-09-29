@@ -108,7 +108,6 @@ class TestController extends Controller
             'title' => $data['title'],
             'description' => $data['description'],
             'content' => $data['questions'], // Laravel will automatically cast to JSON
-            'questions_count' => count($data['questions']),
             'is_published' => $data['is_published'] ?? $test->is_published,
         ];
 

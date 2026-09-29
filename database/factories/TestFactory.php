@@ -78,7 +78,6 @@ class TestFactory extends Factory
             'title' => $testData['title'],
             'description' => $testData['description'],
             'content' => $testData['content'],
-            'questions_count' => $testData['questions_count'],
             'minPoints' => $testData['minPoints'],
             'maxPoints' => $testData['maxPoints'],
             'user_id' => 1,

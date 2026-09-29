@@ -41,7 +41,7 @@ class TestAttemptRepository
 
     public function getAvailableTests(int $userId)
     {
-        return Test::select(['id', 'title', 'description', 'user_id', 'questions_count', 'created_at'])
+        return Test::select(['id', 'title', 'description', 'user_id', 'created_at'])
             ->where('user_id', '!=', $userId)
             ->whereDoesntHave('testAttempts', fn($q) => $q->where('user_id', $userId))
             ->latest()
@@ -51,7 +51,7 @@ class TestAttemptRepository
 
     public function getMyTests(int $userId)
     {
-        return Test::select(['id', 'title', 'description', 'user_id', 'questions_count', 'created_at'])
+        return Test::select(['id', 'title', 'description', 'user_id', 'created_at'])
             ->where('user_id', $userId)
             ->latest()
             ->orderBy('id', 'desc')

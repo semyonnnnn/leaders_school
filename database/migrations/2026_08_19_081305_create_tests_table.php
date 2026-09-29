@@ -17,7 +17,6 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->json('content');
 
-            $table->unsignedInteger('questions_count')->default(1);
             $table->unsignedInteger('minPoints')->default(1);
             $table->unsignedInteger('maxPoints')->default(1);
 

@@ -209,11 +209,13 @@ export interface Test {
 }
 
 export interface FlashProps {
-    success: string | null;
-    error: {
+    message?: string | null;
+    success?: string | null;
+    error?: {
         summary: string | null;
         details: string[] | null;
-    };
+    } | null;
+    generated_users?: any; // Add specific user type here if applicable
 }
 export interface ErrorTelemetryProps {
     summary: string | null;

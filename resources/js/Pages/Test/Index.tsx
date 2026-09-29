@@ -1,7 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-import { Pagination } from '@/components/custom/Pagination'; // Make sure path matches your structure
+import { Pagination } from '@/components/custom/Pagination';
 import { PopUp } from '@/components/custom/PopUp';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import DeleteTestConfirmationModal from '@/Pages/Test/Partials/DeleteTestConfirmationModal';
@@ -10,6 +10,10 @@ import { TestCard } from './Partials/TestCard';
 import TestTabHeader from './Partials/TestTabHeader';
 
 type TabType = 'available' | 'completed' | 'my';
+
+type CustomFlashProps = FlashProps & {
+    message?: string | null;
+};
 
 export default function Index({
     available_tests,
@@ -48,25 +52,27 @@ export default function Index({
         },
     });
 
-    const flash = (usePage().props as any).flash as FlashProps;
+    // Directly extract flash from page props
+    const { flash } = usePage<{ flash: CustomFlashProps }>().props;
 
     useEffect(() => {
-        const isSuccessEmpty = flash.success === null;
+        // Intercept either flash.success or flash.message
+        const activeNotice = flash?.success || flash?.message || null;
         const isErrorEmpty = !flash?.error?.summary && !flash?.error?.details;
 
-        if (isSuccessEmpty && isErrorEmpty) return;
+        if (!activeNotice && isErrorEmpty) return;
 
         setMessage((prev) => ({
-            success: flash.success,
+            success: activeNotice,
             error: isErrorEmpty
                 ? prev.error
                 : {
-                      summary: flash.error.summary,
-                      details: flash.error.details,
+                      summary: flash?.error?.summary ?? null,
+                      details: flash?.error?.details ?? null,
                   },
         }));
 
-        if (flash.success) {
+        if (activeNotice) {
             const timer = setTimeout(() => {
                 setMessage((prev) => ({
                     ...prev,
@@ -115,7 +121,7 @@ export default function Index({
         });
     };
 
-    // TRIGGER MODAL FOR Completed TESTS
+    // TRIGGER MODAL FOR COMPLETED TESTS
     const openDeleteCompletedModal = (id: string | number, title: string) => {
         setDeleteModal({
             isOpen: true,
@@ -252,7 +258,6 @@ export default function Index({
                     <div className="clip-corner relative z-10 flex flex-col items-start justify-between gap-6 border-2 border-zinc-300 bg-zinc-100 p-5 shadow-xs lg:flex-row lg:items-center">
                         {/* CONDITIONAL HEADERS & PERMANENT CREATE BUTTON */}
                         <div className="flex flex-wrap items-center gap-6">
-                            {' '}
                             {activeTab === 'available' && (
                                 <TestTabHeader
                                     title="Доступные Тесты"
@@ -261,7 +266,7 @@ export default function Index({
                                     description="Активные назначенные протоколы для прохождения и проверки"
                                     accentColor="bg-amber-500"
                                 />
-                            )}{' '}
+                            )}
                             {activeTab === 'completed' && (
                                 <TestTabHeader
                                     title="Завершенные Тесты"
@@ -270,7 +275,7 @@ export default function Index({
                                     description="История завершенных попыток и зафиксированные оценки"
                                     accentColor="bg-emerald-500"
                                 />
-                            )}{' '}
+                            )}
                             {activeTab === 'my' && (
                                 <TestTabHeader
                                     title="Мои Тесты"
@@ -279,18 +284,16 @@ export default function Index({
                                     description="Управление собственными созданными протоколами"
                                     accentColor="bg-blue-500"
                                 />
-                            )}{' '}
+                            )}
                             <div className="hidden items-center lg:flex">
-                                {' '}
-                                <div className="mx-6 block h-10 border-r-2 border-gray-400"></div>{' '}
+                                <div className="mx-6 block h-10 border-r-2 border-gray-400"></div>
                                 <Link
                                     href={route('tests.create')}
                                     className="group clip-corner relative h-fit cursor-pointer border-2 border-amber-500 bg-amber-500/10 px-6 py-3 text-sm font-black tracking-[0.15em] text-nowrap text-black uppercase shadow-xs transition-all duration-200 hover:bg-amber-500 hover:text-zinc-950"
                                 >
-                                    {' '}
-                                    [ 00_СОЗДАТЬ_ТЕСТ ]{' '}
-                                </Link>{' '}
-                            </div>{' '}
+                                    [ 00_СОЗДАТЬ_ТЕСТ ]
+                                </Link>
+                            </div>
                         </div>
 
                         {/* TAB SWITCHER BUTTONS */}
@@ -339,13 +342,12 @@ export default function Index({
                                         key={test.id}
                                         test={test}
                                         current_user_id={current_user_id}
-                                        activeTab={activeTab} // <-- Pass the tab state here
+                                        activeTab={activeTab}
                                         onDelete={currentDeleteHandler}
                                     />
                                 ))}
                             </div>
 
-                            {/* RESTORED PAGINATION COMPONENT */}
                             <Pagination
                                 links={currentTests.links}
                                 current_page={currentTests.current_page}

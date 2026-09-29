@@ -14,7 +14,6 @@ class Test extends Model
         'title',
         'description',
         'content',
-        'questions_count',
         'minPoints',
         'maxPoints',
         'is_published',
