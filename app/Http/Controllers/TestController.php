@@ -70,10 +70,28 @@ class TestController extends Controller
 
     public function show(int $id)
     {
-        $test = Test::findOrFail($id);
+        // Fetch the attempt with its associated test model
+        $testAttempt = TestAttempt::with('test')->findOrFail($id);
 
         return Inertia::render('Test/Show', [
-            'test' => $test
+            'testAttempt' => [
+                'id' => $testAttempt->id,
+                'test_id' => $testAttempt->test_id,
+                'user_id' => $testAttempt->user_id,
+                'attempt' => $testAttempt->attempt,
+                'has_passed' => $testAttempt->has_passed,
+                'user_points' => $testAttempt->user_points,
+                'percent' => $testAttempt->percent,
+                'grade' => $testAttempt->grade,
+                'content' => $testAttempt->content,
+                'created_at' => $this->formatTimestamp($testAttempt->created_at),
+                'updated_at' => $this->formatTimestamp($testAttempt->updated_at),
+                'test' => [
+                    'id' => $testAttempt->test->id,
+                    'title' => $testAttempt->test->title,
+                    'description' => $testAttempt->test->description,
+                ],
+            ],
         ]);
     }
 

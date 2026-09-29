@@ -18,14 +18,10 @@
 
 @section('telemetry')
     @php
+        // Generic messages only — no internal IP, paths, or methods
         $telemetry = [
             "ЗАПРОШЕННЫЙ РЕСУРС ОТСУТСТВУЕТ В СИСТЕМЕ",
             "МАРШРУТ ДОСТАВКИ НАРУШЕН",
-            "URL: " . request()->getRequestUri(),
-            "МЕТОД: " . request()->method(),
-            "IP_ЗАПРОСА: " . request()->ip(),
-            "ВРЕМЯ_ОТКАЗА: " . now()->format('H:i:s'),
-            "СТАТУС: $status",
             "РЕКОМЕНДАЦИЯ: ПРОВЕРЬТЕ URL ИЛИ ВЕРНИТЕСЬ НА БАЗУ"
         ];
     @endphp
