@@ -58,27 +58,41 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             // --- TELEMETRY CALCULATIONS ---
+            $isDebug = config('app.debug');
             $dynamicOperation = $request->method() . '_REQUEST';
-            $path = $request->path();
 
-            if ($path === '/') {
-                $dynamicTarget = 'ROOT_CORE';
+            // Status text is the only thing safe to show in production.
+            // $e->getMessage() is developer/framework text: model names, IDs, SQL.
+            $statusSlug = strtoupper(str_replace(' ', '_', $officialStatusText));
+
+            if ($isDebug) {
+                // Local dev: keep the detailed view you had
+                $path = $request->path();
+                $dynamicTarget = $path === '/'
+                    ? 'ROOT_CORE'
+                    : \Illuminate\Support\Str::limit(strtoupper(str_replace(['/', '-'], '_', $path)), 25, '...');
+                $rawMessage = $e->getMessage() ?: $officialStatusText;
+                $location = 'NODE_' . $request->ip();
+                $telemetryData = [
+                    'МАРШРУТ СБОЯ: ' . $request->method() . ' ' . \Illuminate\Support\Str::limit($request->fullUrl(), 45, '...'),
+                    'СТАТУС ОТВЕТА: ' . $statusCode . ' (' . $statusSlug . ')',
+                    'ВРЕМЯ ФИКСАЦИИ: ' . now()->toIso8601String(),
+                    'IP-АДРЕС ИСТОЧНИКА: ' . $request->ip(),
+                ];
             } else {
-                $formattedTarget = strtoupper(str_replace(['/', '-'], ['_', '_'], $path));
-                $dynamicTarget = \Illuminate\Support\Str::limit($formattedTarget, 25, '...');
+                // Production: fixed strings only, nothing derived from the request or exception
+                $dynamicTarget = '...';
+                $rawMessage = $statusSlug;
+                $location = 'ВНЕ_ЗОНЫ_ДОСТУПА';
+                $telemetryData = [
+                    'СТАТУС ОТВЕТА: ' . $statusCode . ' (' . $statusSlug . ')',
+                    // Timestamp is harmless and lets you find the matching log line
+                    'ВРЕМЯ ФИКСАЦИИ: ' . now()->toIso8601String(),
+                    'РЕКОМЕНДАЦИЯ: ВЕРНУТЬСЯ НА БАЗУ',
+                ];
             }
 
             $dynamicStatus = ($statusCode === 403 || $statusCode === 401) ? 'ДОСТУП_БЛОКИРОВАН' : (($statusCode >= 500) ? 'КРИТИЧЕСКИЙ_СБОЙ_ЯДРА' : '...');
-            $shortenedUrl = \Illuminate\Support\Str::limit($request->fullUrl(), 45, '...');
-
-            $telemetryData = [
-                'МАРШРУТ СБОЯ: ' . $request->method() . ' ' . $shortenedUrl,
-                'СТАТУС ОТВЕТА: ' . $statusCode . ' (' . strtoupper(str_replace(' ', '_', $officialStatusText)) . ')',
-                'ВРЕМЯ ФИКСАЦИИ: ' . now()->toIso8601String(),
-                'IP-АДРЕС ИСТОЧНИКА: ' . $request->ip(),
-            ];
-
-            $rawMessage = $e->getMessage() ?: $officialStatusText;
             $shortenedMessage = \Illuminate\Support\Str::limit($rawMessage, 50, '...');
 
             // --- INERTIA APP GUARD ---
@@ -112,8 +126,18 @@ return Application::configure(basePath: dirname(__DIR__))
                     'telemetry' => $telemetryData,
                 ], $statusCode);
             } catch (\Throwable $viewException) {
-                // If your custom view file causes a rendering crash, fallback to errors.minimal safely
-                $errorString = \Illuminate\Support\Str::limit($viewException->getMessage(), 35);
+                // Custom view crashed: fall back to errors.minimal.
+                // report() writes the real exception (with file paths) to laravel.log,
+                // so you can still debug it without exposing it to the browser.
+                report($viewException);
+
+                // Only show the compile error in debug mode: in production the message
+                // contains file paths and view internals.
+                $telemetry = $isDebug
+                    ? array_merge($telemetryData, [
+                        'ОШИБКА_КОМПИЛЯЦИИ: ' . \Illuminate\Support\Str::limit($viewException->getMessage(), 35),
+                    ])
+                    : $telemetryData;
 
                 return response()->view('errors.minimal', [
                     'code' => $statusCode,
@@ -122,8 +146,8 @@ return Application::configure(basePath: dirname(__DIR__))
                     'operation' => $dynamicOperation,
                     'status' => $dynamicStatus,
                     'target' => $dynamicTarget,
-                    'location' => 'NODE_' . $request->ip(),
-                    'telemetry' => array_merge($telemetryData, ["ОШИБКА_КОМПИЛЯЦИИ: {$errorString}"]),
+                    'location' => $location, // was 'NODE_' . $request->ip()
+                    'telemetry' => $telemetry,
                 ], $statusCode);
             }
         });
