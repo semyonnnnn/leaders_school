@@ -51,16 +51,15 @@ class DatabaseSeeder extends Seeder
             $rootUser->assignRole(RolesEnum::Root);
         }
 
-        // 5. CREATE ALINA (ADMIN)
-        $Alina = User::firstOrCreate(
-            ['email' => 'alina@alina.com'],
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@admin.com'],
             [
-                'name' => 'Alina',
-                'password' => Hash::make('doch_sergeya'),
+                'name' => 'admin',
+                'password' => Hash::make('admin'),
             ]
         );
-        if (!$Alina->hasRole(RolesEnum::Admin)) {
-            $Alina->assignRole(RolesEnum::Admin);
+        if (!$admin->hasRole(RolesEnum::Admin)) {
+            $admin->assignRole(RolesEnum::Admin);
         }
 
         // Create users with staggered timestamps (1 millisecond apart)
@@ -75,10 +74,9 @@ class DatabaseSeeder extends Seeder
             usleep(1000);
         }
 
-        // Create Alina's tests with staggered timestamps
         for ($i = 0; $i < 100; $i++) {
             Test::factory()->create([
-                'user_id' => $Alina->id,
+                'user_id' => $admin->id,
             ]);
             usleep(1000);
         }

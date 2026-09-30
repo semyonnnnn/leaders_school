@@ -29,6 +29,8 @@ export default function Result({
 }) {
     const { test, has_passed } = testAttempt;
 
+    console.log('testAttempt:', testAttempt);
+
     // Same grid-paper background as Show.tsx so both pages feel like one system
     const gridBackground = {
         backgroundImage: `
