@@ -119,4 +119,68 @@ class TestAttemptRepository
             ->locale('ru')
             ->isoFormat('D MMMM YYYY HH:mm') . ' МСК';
     }
+
+    public function getCompletedTest(int $testId, int $userId): ?array
+    {
+        $attempt = TestAttempt::with('test:id,title,description')
+            ->where('test_id', $testId)
+            // Scoping by user_id is also the ownership check:
+            // nobody can open another user's attempt any more.
+            ->where('user_id', $userId)
+            ->latest() // created_at desc, same "latest" rule as getCompletedTests
+            ->first();
+
+        // null (not a 404) on purpose: the controller uses "no attempts" to
+        // decide that this is an available test instead.
+        if (!$attempt) {
+            return null;
+        }
+
+        return [
+            'id' => $attempt->id,
+            'test_id' => $attempt->test_id,
+            'user_id' => $attempt->user_id,
+            'attempt' => $attempt->attempt,
+            'has_passed' => $attempt->has_passed,
+            'user_points' => $attempt->user_points,
+            'percent' => $attempt->percent,
+            'grade' => $attempt->grade,
+            'content' => $attempt->content,
+            'created_at' => $this->formatTimestamp($attempt->created_at),
+            'updated_at' => $this->formatTimestamp($attempt->updated_at),
+            'test' => [
+                'id' => $attempt->test->id,
+                'title' => $attempt->test->title,
+                'description' => $attempt->test->description,
+            ],
+        ];
+    }
+
+    public function getAvailableTest(int $testId, int $userId): array
+    {
+        $test = Test::select(['id', 'title', 'description', 'content', 'minPoints', 'created_at'])
+            ->where('user_id', '!=', $userId)
+            ->findOrFail($testId);
+
+        // Whitelist: only what Show.tsx renders. A new field added to a question
+        // later (e.g. the correct answer) stays server-side by default.
+        $questions = collect($test->content ?? [])->map(fn($q) => [
+            'id' => $q['id'],
+            'text' => $q['text'],
+            'value' => $q['value'] ?? 0,
+            'options' => collect($q['options'] ?? [])->map(fn($o) => [
+                'id' => $o['id'],
+                'text' => $o['text'],
+            ])->values()->all(),
+        ])->values()->all();
+
+        return [
+            'id' => $test->id,
+            'title' => $test->title,
+            'description' => $test->description,
+            'minPoints' => $test->minPoints,
+            'questions' => $questions,
+            'created_at' => $this->formatTimestamp($test->created_at),
+        ];
+    }
 }

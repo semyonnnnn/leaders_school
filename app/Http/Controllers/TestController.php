@@ -68,31 +68,19 @@ class TestController extends Controller
         return Inertia::render('Test/Create');
     }
 
-    public function show(int $id)
+    public function show(int $id, TestAttemptRepository $repo)
     {
-        // Fetch the attempt with its associated test model
-        $testAttempt = TestAttempt::with('test')->findOrFail($id);
+        $userId = Auth::id();
 
-        return Inertia::render('Test/Show', [
-            'testAttempt' => [
-                'id' => $testAttempt->id,
-                'test_id' => $testAttempt->test_id,
-                'user_id' => $testAttempt->user_id,
-                'attempt' => $testAttempt->attempt,
-                'has_passed' => $testAttempt->has_passed,
-                'user_points' => $testAttempt->user_points,
-                'percent' => $testAttempt->percent,
-                'grade' => $testAttempt->grade,
-                'content' => $testAttempt->content,
-                'created_at' => $this->formatTimestamp($testAttempt->created_at),
-                'updated_at' => $this->formatTimestamp($testAttempt->updated_at),
-                'test' => [
-                    'id' => $testAttempt->test->id,
-                    'title' => $testAttempt->test->title,
-                    'description' => $testAttempt->test->description,
-                ],
-            ],
-        ]);
+        $completed = $repo->getCompletedTest($id, $userId);
+
+        if ($completed) {
+            // was 'Test/Show': that page is for taking a test and crashes on this data
+            return Inertia::render('Test/Result', ['testAttempt' => $completed]);
+        }
+
+        // unchanged: tab 01 still opens the take-the-test page
+        return Inertia::render('Test/Show', ['test' => $repo->getAvailableTest($id, $userId)]);
     }
 
     public function edit(int $id)
