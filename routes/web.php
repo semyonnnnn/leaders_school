@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/tests', [TestController::class, 'index'])->name('tests.index'); //all
             Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create'); //create
             Route::get('/tests/{test}/show', [TestController::class, 'show'])->name('tests.show'); //take a test as user
+            Route::get('/tests/{test}/results', [TestController::class, 'results'])->name('tests.results');
             Route::get('/tests/{test}/edit', [TestController::class, 'edit'])->name('tests.edit'); //edit test as author
 
             //TEST ACTIONS

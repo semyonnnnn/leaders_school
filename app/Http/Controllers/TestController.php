@@ -29,13 +29,13 @@ class TestController extends Controller
                 ? $repo->getAvailableTests($userId)
                 : Inertia::lazy(fn() => $repo->getAvailableTests($userId)),
 
-            'my_tests' => $activeTab === 'my'
-                ? $repo->getMyTests($userId)
-                : Inertia::lazy(fn() => $repo->getMyTests($userId)),
-
             'completed_tests' => $activeTab === 'completed'
                 ? $repo->getCompletedTests($userId)
                 : Inertia::lazy(fn() => $repo->getCompletedTests($userId)),
+
+            'my_tests' => $activeTab === 'my'
+                ? $repo->getMyTests($userId)
+                : Inertia::lazy(fn() => $repo->getMyTests($userId)),
 
             'current_user_id' => $userId,
         ]);
@@ -72,15 +72,16 @@ class TestController extends Controller
     {
         $userId = Auth::id();
 
-        $completed = $repo->getCompletedTest($id, $userId);
-
-        if ($completed) {
-            // was 'Test/Show': that page is for taking a test and crashes on this data
-            return Inertia::render('Test/Result', ['testAttempt' => $completed]);
-        }
-
         // unchanged: tab 01 still opens the take-the-test page
         return Inertia::render('Test/Show', ['test' => $repo->getAvailableTest($id, $userId)]);
+    }
+
+    public function results(int $id, TestAttemptRepository $repo)
+    {
+        $userId = Auth::id();
+
+        $completed = $repo->getCompletedTest($id, $userId);
+        return Inertia::render('Test/Result', ['testAttempt' => $completed]);
     }
 
     public function edit(int $id)
