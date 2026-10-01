@@ -10,8 +10,8 @@ services:
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
-            - '${APP_PORT:-80}:80'
-            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+            - '${APP_PORT}:80'
+            - '${VITE_PORT}:${VITE_PORT}'
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
@@ -31,7 +31,7 @@ services:
     mariadb:
         image: 'mariadb:11'
         ports:
-            - '${FORWARD_DB_PORT:-3306}:3306'
+            - '${FORWARD_DB_PORT}:3306'
         environment:
             MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
             MYSQL_ROOT_HOST: '%'
@@ -55,7 +55,7 @@ services:
     cloudbeaver:
         image: dbeaver/cloudbeaver:latest
         ports:
-            - '8080:8978'
+            - '${CLOUDBEAVER_PORT}:8978'
         volumes:
             - 'cloudbeaver-data:/opt/cloudbeaver/workspace'
         depends_on:
