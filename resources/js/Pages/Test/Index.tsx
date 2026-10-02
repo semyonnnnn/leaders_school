@@ -52,18 +52,6 @@ export default function Index({
         },
     });
 
-    useEffect(() => {
-        const savedY = sessionStorage.getItem('testsScrollY');
-        if (savedY !== null) {
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    window.scrollTo(0, Number(savedY));
-                    sessionStorage.removeItem('testsScrollY');
-                });
-            });
-        }
-    }, []);
-
     // Directly extract flash from page props
     const { flash } = usePage<PageProps<{ flash: CustomFlashProps }>>().props;
 

@@ -79,12 +79,11 @@ const TestCard: React.FC<TestCardProps> = ({
                 <div className="border-t-2 border-zinc-300 pt-4">
                     <button
                         onClick={() => {
-                            sessionStorage.setItem('testsScrollY', String(window.scrollY));
                             router.get(route('tests.take', test.id));
                         }}
                         className="clip-corner block w-full cursor-pointer border-2 border-zinc-800 bg-zinc-950 py-3 text-center text-xs font-black tracking-widest text-amber-400 uppercase transition-all hover:border-amber-600 hover:bg-amber-500 hover:text-zinc-950"
                     >
-            // НАЧАТЬ_ТЕСТИРОВАНИЕ →
+                        // НАЧАТЬ_ТЕСТИРОВАНИЕ →
                     </button>
                 </div>
             )}
@@ -101,7 +100,6 @@ const TestCard: React.FC<TestCardProps> = ({
                     </button>
                     <button
                         onClick={() => {
-                            sessionStorage.setItem('testsScrollY', String(window.scrollY));
                             router.get(route('tests.take', test.id));
                         }}
                         className="flex-1 cursor-pointer border-2 border-zinc-500 bg-zinc-200 py-3 text-center text-xs font-black tracking-wider text-zinc-900 uppercase hover:bg-zinc-300"
