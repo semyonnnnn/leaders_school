@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
+///////////////////////////////
+use App\Models\Setting;
+use App\Models\TestAttempt;
 
 class TestService
 {
@@ -60,5 +62,15 @@ class TestService
         }
 
         return ['minPoints' => $passingScore, 'maxPoints' => $totalPoints];
+    }
+
+    public function maxAttemptsReached(int $testId, int $userId): bool
+    {
+        $maxAttempts = Setting::where('key', 'max_attempts')->value('value');
+
+        return TestAttempt::where('test_id', $testId)
+            ->where('user_id', $userId)
+            ->where('attempt', '>=', $maxAttempts)
+            ->exists();
     }
 }

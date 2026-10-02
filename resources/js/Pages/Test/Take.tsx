@@ -4,11 +4,11 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Test, QuestionItem } from '@/types';
 
-interface ShowProps extends PageProps {
+interface TakeProps extends PageProps {
     test: Test;
 }
 
-export default function Show({ auth, test }: ShowProps) {
+export default function Take({ auth, test }: TakeProps) {
     const resolveQuestions = (): QuestionItem[] => {
         if (test.questions && Array.isArray(test.questions)) {
             return test.questions;

@@ -12,6 +12,7 @@ use App\Models\Test;
 use App\Models\TestAttempt;
 use App\Repositories\TestAttemptRepository;
 use App\Services\TestService;
+use App\Models\Setting;
 
 class TestController extends Controller
 {
@@ -68,12 +69,15 @@ class TestController extends Controller
         return Inertia::render('Test/Create');
     }
 
-    public function show(int $id, TestAttemptRepository $repo)
+    public function take(int $testId, TestAttemptRepository $repo, TestService $testService)
     {
         $userId = Auth::id();
 
-        // unchanged: tab 01 still opens the take-the-test page
-        return Inertia::render('Test/Show', ['test' => $repo->getAvailableTest($id, $userId)]);
+        if ($testService->maxAttemptsReached($testId, $userId)) {
+            return;
+        }
+
+        return Inertia::render('Test/Take', ['test' => $repo->getAvailableTest($testId, $userId)]);
     }
 
     public function results(int $id, TestAttemptRepository $repo)
