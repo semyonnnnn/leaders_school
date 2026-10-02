@@ -52,8 +52,20 @@ export default function Index({
         },
     });
 
+    useEffect(() => {
+        const savedY = sessionStorage.getItem('testsScrollY');
+        if (savedY !== null) {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, Number(savedY));
+                    sessionStorage.removeItem('testsScrollY');
+                });
+            });
+        }
+    }, []);
+
     // Directly extract flash from page props
-  const { flash } = usePage<PageProps<{ flash: CustomFlashProps }>>().props;
+    const { flash } = usePage<PageProps<{ flash: CustomFlashProps }>>().props;
 
     useEffect(() => {
         // Intercept either flash.success or flash.message
@@ -67,9 +79,9 @@ export default function Index({
             error: isErrorEmpty
                 ? prev.error
                 : {
-                      summary: flash?.error?.summary ?? null,
-                      details: flash?.error?.details ?? null,
-                  },
+                    summary: flash?.error?.summary ?? null,
+                    details: flash?.error?.details ?? null,
+                },
         }));
 
         if (activeNotice) {
@@ -102,8 +114,8 @@ export default function Index({
                     tab === 'available'
                         ? 'available_tests'
                         : tab === 'completed'
-                          ? 'completed_tests'
-                          : 'my_tests',
+                            ? 'completed_tests'
+                            : 'my_tests',
                 ],
                 preserveState: true,
                 preserveScroll: true,
@@ -150,16 +162,16 @@ export default function Index({
         activeTab === 'available'
             ? available_tests
             : activeTab === 'completed'
-              ? completed_tests
-              : my_tests;
+                ? completed_tests
+                : my_tests;
 
     // Determine the corresponding 'only' prop identifier for pagination requests
     const currentPaginationOnlyProp =
         activeTab === 'available'
             ? 'available_tests'
             : activeTab === 'completed'
-              ? 'completed_tests'
-              : 'my_tests';
+                ? 'completed_tests'
+                : 'my_tests';
 
     const currentEmptyMessage =
         activeTab === 'my'
@@ -300,33 +312,30 @@ export default function Index({
                         <div className="mt-4 flex w-full flex-wrap items-center gap-2 lg:mt-0 lg:w-auto">
                             <button
                                 onClick={() => handleTabChange('available')}
-                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${
-                                    activeTab === 'available'
-                                        ? 'border-zinc-950 bg-amber-500 text-zinc-950'
-                                        : 'border-amber-500 bg-zinc-950 text-amber-500 hover:bg-amber-500 hover:text-zinc-950'
-                                }`}
+                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${activeTab === 'available'
+                                    ? 'border-zinc-950 bg-amber-500 text-zinc-950'
+                                    : 'border-amber-500 bg-zinc-950 text-amber-500 hover:bg-amber-500 hover:text-zinc-950'
+                                    }`}
                             >
                                 [ 01_ДОСТУПНЫЕ ]
                             </button>
 
                             <button
                                 onClick={() => handleTabChange('completed')}
-                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${
-                                    activeTab === 'completed'
-                                        ? 'border-zinc-950 bg-amber-500 text-zinc-950'
-                                        : 'border-amber-500 bg-zinc-950 text-amber-500 hover:bg-amber-500 hover:text-zinc-950'
-                                }`}
+                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${activeTab === 'completed'
+                                    ? 'border-zinc-950 bg-amber-500 text-zinc-950'
+                                    : 'border-amber-500 bg-zinc-950 text-amber-500 hover:bg-amber-500 hover:text-zinc-950'
+                                    }`}
                             >
                                 [ 02_ЗАВЕРШЕННЫЕ ]
                             </button>
 
                             <button
                                 onClick={() => handleTabChange('my')}
-                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${
-                                    activeTab === 'my'
-                                        ? 'border-zinc-950 bg-amber-500 text-zinc-950'
-                                        : 'border-amber-500 bg-zinc-950 text-amber-500 hover:bg-amber-500 hover:text-zinc-950'
-                                }`}
+                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${activeTab === 'my'
+                                    ? 'border-zinc-950 bg-amber-500 text-zinc-950'
+                                    : 'border-amber-500 bg-zinc-950 text-amber-500 hover:bg-amber-500 hover:text-zinc-950'
+                                    }`}
                             >
                                 [ 03_МОИ ]
                             </button>

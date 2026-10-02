@@ -39,6 +39,7 @@ class TestAttemptRepository
             }], 'created_at')
             ->orderByDesc('latest_attempt')
             ->paginate(6, ['*'], 'passed_page')
+            ->withQueryString()
             ->through(function ($test) {
                 return [
                     'id' => $test->id,
@@ -65,6 +66,7 @@ class TestAttemptRepository
             ->whereDoesntHave('testAttempts', fn($q) => $q->where('user_id', $userId))
             ->latest()
             ->paginate(6, ['*'], 'available_page')
+            ->withQueryString()
             ->through(function ($test) {
                 return [
                     'id' => $test->id,
@@ -88,6 +90,7 @@ class TestAttemptRepository
             ->where('user_id', $userId)
             ->latest()
             ->paginate(6, ['*'], 'my_page')
+            ->withQueryString()
             ->through(function ($test) {
                 return [
                     'id' => $test->id,

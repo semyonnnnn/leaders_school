@@ -74,7 +74,8 @@ class TestController extends Controller
         $userId = Auth::id();
 
         if ($testService->maxAttemptsReached($testId, $userId)) {
-            return;
+            return redirect()->back()
+                ->with('error', 'Достигнуто максимальное количество попыток');
         }
 
         return Inertia::render('Test/Take', ['test' => $repo->getAvailableTest($testId, $userId)]);
