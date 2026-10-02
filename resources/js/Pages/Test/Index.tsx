@@ -2,7 +2,6 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 import { Pagination } from '@/components/custom/Pagination';
-import { PopUp } from '@/components/custom/PopUp';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import DeleteTestConfirmationModal from '@/Pages/Test/Partials/DeleteTestConfirmationModal';
 import { FlashProps, PageProps, PaginatedTest } from '@/types';
@@ -31,6 +30,10 @@ export default function Index({
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [activeTab, setActiveTab] = useState<TabType>(active_tab);
 
+    useEffect(() => {
+        setActiveTab(active_tab);
+    }, [active_tab]);
+
     // MODAL STATE MANAGEMENT
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
@@ -44,45 +47,9 @@ export default function Index({
         type: null,
     });
 
-    const [message, setMessage] = useState<FlashProps>({
-        success: null,
-        error: {
-            summary: null,
-            details: null,
-        },
-    });
-
     // Directly extract flash from page props
     const { flash } = usePage<PageProps<{ flash: CustomFlashProps }>>().props;
 
-    useEffect(() => {
-        // Intercept either flash.success or flash.message
-        const activeNotice = flash?.success || flash?.message || null;
-        const isErrorEmpty = !flash?.error?.summary && !flash?.error?.details;
-
-        if (!activeNotice && isErrorEmpty) return;
-
-        setMessage((prev) => ({
-            success: activeNotice,
-            error: isErrorEmpty
-                ? prev.error
-                : {
-                    summary: flash?.error?.summary ?? null,
-                    details: flash?.error?.details ?? null,
-                },
-        }));
-
-        if (activeNotice) {
-            const timer = setTimeout(() => {
-                setMessage((prev) => ({
-                    ...prev,
-                    success: null,
-                }));
-            }, 7000);
-
-            return () => clearTimeout(timer);
-        }
-    }, [flash]);
 
     const REPLICATED_WATERMARK_TEXT = 'ТЕСТИРОВАНИЕ';
     const WATERMARK_LAYOUT_MAP = ['left-[2%]', 'left-[55%]'];
@@ -173,21 +140,6 @@ export default function Index({
 
     return (
         <AuthenticatedLayout>
-            {message.success && (
-                <PopUp
-                    message={message.success}
-                    handleClick={() => {
-                        setMessage({
-                            success: null,
-                            error: {
-                                summary: null,
-                                details: null,
-                            },
-                        });
-                    }}
-                />
-            )}
-
             {/* DELETE CONFIRMATION MODAL */}
             <DeleteTestConfirmationModal
                 isOpen={deleteModal.isOpen}

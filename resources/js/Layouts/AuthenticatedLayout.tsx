@@ -20,15 +20,27 @@ export default function Authenticated({
         flash?: FlashProps;
     };
     const user = auth.user;
+    console.log('RENDER - flash:', flash);
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
-    // Centralized handle for ubiquitous success notifications
+    // Centralized handle for ubiquitous success notifications —
+    // the ONLY place flash.message is read and shown app-wide.
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     useEffect(() => {
-        if (flash?.success) {
-            setSuccessMessage(flash.success);
+        console.log('EFFECT FIRED - flash.message:', flash?.success);
+        if (flash?.message) {
+            console.log('SETTING successMessage to:', flash.message);
+            const lastShown = sessionStorage.getItem('lastFlashNotice');
+            console.log('lastShown was:', lastShown);
+            if (lastShown === flash.message) {
+                console.log('SKIPPED — matched lastShown');
+                return;
+            }
+            sessionStorage.setItem('lastFlashNotice', flash.message);
+
+            setSuccessMessage(flash.message);
             const timer = setTimeout(() => {
                 setSuccessMessage(null);
             }, 7000);
@@ -172,11 +184,10 @@ const MenuItem = ({
     return (
         <Link
             href={route(href_route)}
-            className={`clip-corner px-3 py-1.5 text-xs font-bold tracking-widest uppercase transition-colors ${
-                isCurrent
-                    ? 'border-x border-t border-b-2 border-zinc-300 border-b-amber-600 bg-amber-500/10 text-black'
-                    : 'text-zinc-600 hover:bg-zinc-300/70 hover:text-zinc-950'
-            }`}
+            className={`clip-corner px-3 py-1.5 text-xs font-bold tracking-widest uppercase transition-colors ${isCurrent
+                ? 'border-x border-t border-b-2 border-zinc-300 border-b-amber-600 bg-amber-500/10 text-black'
+                : 'text-zinc-600 hover:bg-zinc-300/70 hover:text-zinc-950'
+                }`}
         >
             <span className={isCurrent ? 'font-black text-amber-600' : ''}>
                 [{' '}

@@ -122,22 +122,24 @@ class TestAttemptRepository
             ->locale('ru')
             ->isoFormat('D MMMM YYYY HH:mm') . ' МСК';
     }
-
     public function getCompletedTest(int $testId, int $userId): ?array
     {
         $attempt = TestAttempt::with('test:id,title,description')
             ->where('test_id', $testId)
-            // Scoping by user_id is also the ownership check:
-            // nobody can open another user's attempt any more.
             ->where('user_id', $userId)
-            ->latest() // created_at desc, same "latest" rule as getCompletedTests
+            ->latest()
             ->first();
 
-        // null (not a 404) on purpose: the controller uses "no attempts" to
-        // decide that this is an available test instead.
         if (!$attempt) {
             return null;
         }
+
+        // Strip correct_answer entirely — never sent to the frontend,
+        // regardless of whether the question was answered correctly.
+        $content = collect($attempt->content)->map(function ($question) {
+            unset($question['correct_answer']);
+            return $question;
+        })->all();
 
         return [
             'id' => $attempt->id,
@@ -148,7 +150,7 @@ class TestAttemptRepository
             'user_points' => $attempt->user_points,
             'percent' => $attempt->percent,
             'grade' => $attempt->grade,
-            'content' => $attempt->content,
+            'content' => $content,
             'created_at' => $this->formatTimestamp($attempt->created_at),
             'updated_at' => $this->formatTimestamp($attempt->updated_at),
             'test' => [
