@@ -99,12 +99,12 @@ export interface LearningMaterial {
     title: string;
     img?: string;
     type:
-        | 'Видеокурс'
-        | 'Документ PDF'
-        | 'Лаб. руководство'
-        | 'Подкаст'
-        | 'Системная матрица'
-        | 'Аппаратная схема';
+    | 'Видеокурс'
+    | 'Документ PDF'
+    | 'Лаб. руководство'
+    | 'Подкаст'
+    | 'Системная матрица'
+    | 'Аппаратная схема';
     typeIcon: string;
     iconColor?: string;
     file_path: string;
@@ -195,6 +195,12 @@ export interface UserIndexProps {
     roleLabels: Record<string, string>;
 }
 
+export interface TestMaterial {
+    id: number;
+    title: string;
+    link: string;
+}
+
 export interface Test {
     id: number;
     title: string;
@@ -206,6 +212,7 @@ export interface Test {
     questions_count?: number;
     created_at: string;
     updated_at: string;
+    materials?: TestMaterial[];
 }
 
 export interface FlashProps {

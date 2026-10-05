@@ -19,6 +19,9 @@ const TestCard: React.FC<TestCardProps> = ({
     const isCompletedTest = activeTab === 'completed';
     const isAvailableTest = activeTab === 'available';
 
+    // Fallback keeps the card from crashing if a payload ever arrives without the key
+    const materials = test.materials ?? [];
+
     return (
         <div className="group clip-corner relative flex flex-col justify-between border-2 border-zinc-300 bg-zinc-100/80 p-5 shadow-xs transition-all duration-150 hover:border-zinc-500 hover:bg-zinc-100">
             <div className="mb-4 flex items-center justify-between border-b-2 border-zinc-300 pb-[0.1rem]">
@@ -52,6 +55,33 @@ const TestCard: React.FC<TestCardProps> = ({
                             {test.created_at}
                         </span>
                     </div>
+                </div>
+
+                {/* RELATED MATERIALS: always rendered so every card has the same structure */}
+                <div className="mt-3 border-2 border-zinc-300 bg-zinc-200/70 p-3">
+                    <span className="mb-2 block text-[10px] font-black text-zinc-500 uppercase">
+                        Материалы:
+                    </span>
+
+                    {materials.length > 0 ? (
+                        <ul className="flex flex-wrap gap-2">
+                            {materials.map((material) => (
+                                <li key={material.id}>
+                                    {/* Plain <a>, not Inertia <Link>: the link is an absolute
+                                        URL built by the server, and the target page may not
+                                        be an Inertia page */}
+                                    <a
+                                        href={material.link}
+                                        className="clip-corner block border-2 border-amber-600 bg-amber-500/10 px-2 py-1 text-[11px] font-black tracking-wider text-zinc-900 uppercase transition-colors hover:bg-amber-500 hover:text-zinc-950"
+                                    >
+                                        {material.title}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <span className="text-sm font-bold text-zinc-500">—</span>
+                    )}
                 </div>
             </div>
 

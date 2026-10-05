@@ -3,26 +3,39 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 ///////////////////////////////
-use App\Models\Setting;
 use App\Models\TestAttempt;
+use App\Models\Setting;
+use App\Models\Test;
+use Illuminate\Database\Eloquent\Collection;
+
 
 class TestService
 {
-    public function getData(array $data): array
+    public function store(array $data): Test
     {
-        $questions = $data['questions'] ?? [];
-        $minPoints = $this->calculateScores($questions)['minPoints'];
-        $maxPoints = $this->calculateScores($questions)['maxPoints'];
+        return DB::transaction(function () use ($data) {
+            $questions = $data['questions'] ?? [];
+            $scores = $this->calculateScores($questions);
 
-        return [
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'content' => $questions,
-            'minPoints' => $minPoints,
-            'maxPoints' => $maxPoints,
-            'user_id' => Auth::id(),
-        ];
+            // 1. Create the Test record
+            $test = Test::create([
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'content' => $questions,
+                'minPoints' => $scores['minPoints'],
+                'maxPoints' => $scores['maxPoints'],
+                'user_id' => Auth::id(),
+            ]);
+
+            // 2. Sync associated materials via Eloquent pivot relationship
+            if (!empty($data['material_ids'])) {
+                $test->materials()->sync($data['material_ids']);
+            }
+
+            return $test;
+        });
     }
 
     public function calculateScores(?array $questions): array
@@ -72,5 +85,15 @@ class TestService
             ->where('user_id', $userId)
             ->where('attempt', '>=', $maxAttempts)
             ->exists();
+    }
+    public static function getMaterialsWithLink(Collection $materials): array
+    {
+        $baseUrl = rtrim(config('app.url'), '/');
+
+        return $materials->map(fn($material) => [
+            'id' => $material->id,
+            'title' => $material->title,
+            'link' => "{$baseUrl}/materials/{$material->id}",
+        ])->all();
     }
 }

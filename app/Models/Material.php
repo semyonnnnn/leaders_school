@@ -28,4 +28,10 @@ class Material extends Model
             }
         });
     }
+
+    public function tests()
+    {
+        return $this->belongsToMany(Test::class, 'test_materials')
+            ->withTimestamps();
+    }
 }

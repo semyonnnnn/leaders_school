@@ -9,9 +9,21 @@ interface Question {
     is_correct: boolean;
 }
 
+interface TestData {
+    id: number;
+    title: string;
+    description: string | null;
+    minPoints?: number;
+    maxPoints?: number;
+    user_name?: string | null;
+    created_at?: string;
+    updated_at?: string;
+}
+
 interface TestAttemptResult {
     id: number;
     test_id: number;
+    user_id: number;
     attempt: number;
     has_passed: boolean;
     user_points: number;
@@ -20,11 +32,7 @@ interface TestAttemptResult {
     created_at: string | null;
     updated_at: string | null;
     content: Record<string, Question>;
-    test: {
-        id: number;
-        title: string;
-        description: string | null;
-    };
+    test: TestData;
 }
 
 export default function Result({
@@ -51,9 +59,12 @@ export default function Result({
         backgroundSize: '12px 12px',
     };
 
-    const stats: { label: string; value: string | number }[] = [
+    const pointsDisplay = test.maxPoints !== undefined
+        ? `${testAttempt.user_points}/${test.maxPoints}`
+        : testAttempt.user_points;
+
+    const remainingStats: { label: string; value: string | number }[] = [
         { label: 'Попытка', value: testAttempt.attempt },
-        { label: 'Баллы', value: testAttempt.user_points },
         { label: 'Процент', value: `${testAttempt.percent}%` },
         { label: 'Оценка', value: testAttempt.grade ?? '—' },
     ];
@@ -103,9 +114,17 @@ export default function Result({
                     className="clip-corner h-auto w-full border-[3px] border-amber-600 p-6 shadow-[4px_4px_0px_rgba(217,119,6,0.3)]"
                     style={gridBackground}
                 >
-                    <div className="mb-5 flex items-center justify-between border-b-2 border-zinc-400 pb-3">
+                    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-zinc-400 pb-3">
                         <div className="flex items-center gap-2">
                             <span className="font-black text-amber-600 animate-pulse">//</span>
+
+                            {/* AUTHOR NAME PLACED LEFT OF TEST TITLE */}
+                            {test.user_name && (
+                                <span className="clip-corner bg-zinc-800 px-2 py-0.5 text-xs font-black tracking-wider text-amber-400 uppercase">
+                                    @{test.user_name}
+                                </span>
+                            )}
+
                             <h3 className="text-base font-black tracking-widest text-zinc-900 uppercase">
                                 {test.title}
                             </h3>
@@ -123,21 +142,46 @@ export default function Result({
                     </div>
 
                     <div className="flex flex-col gap-4 lg:flex-row items-stretch">
-                        {/* CONDENSED STATS BLOCK */}
-                        <div className="clip-corner grid w-full max-w-xs shrink-0 grid-cols-2 gap-[2px] border-2 border-zinc-600 bg-zinc-600 lg:w-64">
-                            {stats.map((stat) => (
-                                <div
-                                    key={stat.label}
-                                    className="flex flex-col justify-center bg-zinc-100 p-3"
-                                >
-                                    <span className="text-[10px] font-black tracking-widest text-zinc-500 uppercase">
-                                        {stat.label}
+
+                        {/* TELEMETRY STATS BLOCK */}
+                        <div className="flex w-full shrink-0 gap-2 lg:w-80">
+
+                            {/* FEATURED BIG "POINTS" SQUARE */}
+                            <div className="clip-corner flex flex-1 flex-col justify-between border-2 border-amber-600 bg-amber-500/10 p-4 shadow-sm min-w-30">
+                                <span className="text-[10px] font-black tracking-widest text-amber-700 uppercase">
+                                    Баллы
+                                </span>
+                                <div className="my-auto text-center">
+                                    <span className="block text-3xl font-black text-zinc-900 md:text-4xl">
+                                        {pointsDisplay}
                                     </span>
-                                    <span className="mt-1 text-2xl font-black text-zinc-900">
-                                        {stat.value}
-                                    </span>
+                                    {test.minPoints !== undefined && (
+                                        <span className="mt-1 block text-lg font-bold text-amber-800 uppercase">
+                                            мин. {test.minPoints} б.
+                                        </span>
+                                    )}
                                 </div>
-                            ))}
+                                <span className="text-[9px] font-bold text-zinc-500 uppercase">
+                                    итог
+                                </span>
+                            </div>
+
+                            {/* REMAINING 3 TILES GRID */}
+                            <div className="clip-corner grid flex-1 grid-cols-1 gap-0.5 border-2 border-zinc-600 bg-zinc-600">
+                                {remainingStats.map((stat) => (
+                                    <div
+                                        key={stat.label}
+                                        className="flex flex-col justify-center bg-zinc-100 p-2.5"
+                                    >
+                                        <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">
+                                            {stat.label}
+                                        </span>
+                                        <span className="mt-0.5 text-lg font-black text-zinc-900">
+                                            {stat.value}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         {/* BRIEFING PANEL */}
@@ -155,7 +199,7 @@ export default function Result({
                                 )}
 
                                 {test.description && !has_passed && (
-                                    <div className="h-[2px] w-full bg-amber-600/30" />
+                                    <div className="h-0.5 w-full bg-amber-600/30" />
                                 )}
 
                                 {!has_passed && (
@@ -176,9 +220,9 @@ export default function Result({
                         )}
                     </div>
 
-                    <p className="mt-5 text-[10px] font-bold tracking-wider text-zinc-600 uppercase border-t border-zinc-300/50 pt-2">
-                        Завершён: {testAttempt.created_at ?? '—'}
-                    </p>
+                    <div className="mt-5 flex items-center justify-between border-t border-zinc-300/50 pt-2 text-[10px] font-bold tracking-wider text-zinc-600 uppercase">
+                        <span>Завершён: {testAttempt.created_at ?? '—'}</span>
+                    </div>
                 </div>
 
                 {/* QUESTIONS BREAKDOWN WITH GRID TEXTURE */}
@@ -220,17 +264,27 @@ export default function Result({
                                                 <p className="text-lg font-bold text-zinc-900 leading-tight">
                                                     {questionText}
                                                 </p>
+                                                {/* QUESTION POINT VALUE */}
+
                                             </div>
 
-                                            {/* MUTED CARD STATUS */}
-                                            <span
-                                                className={`shrink-0 text-xs md:text-sm font-black tracking-widest uppercase px-2 py-0.5 clip-corner border ${ok
-                                                    ? 'bg-emerald-900/20 text-emerald-900 border-emerald-700/60'
-                                                    : 'bg-red-900/20 text-red-900 border-red-700/60'
-                                                    }`}
-                                            >
-                                                [ {ok ? '✓ ВЕРНО' : '✗ ОШИБКА'} ]
-                                            </span>
+
+                                            <div className='flex gap-2 w-60 justify-between'>
+                                                {question.value !== undefined && (
+                                                    <div className="shrink-0 clip-corner border border-zinc-400 bg-zinc-300/90 px-1.5 py-0.5 text-sm font-black tracking-wider  text-zinc-700 uppercase">
+                                                        цена: {question.value}
+                                                    </div>
+                                                )}
+                                                {/* MUTED CARD STATUS */}
+                                                <div
+                                                    className={`shrink-0 text-xs md:text-sm font-black tracking-widest uppercase px-2 py-0.5 clip-corner border ${ok
+                                                        ? 'bg-emerald-900/20 text-emerald-900 border-emerald-700/60'
+                                                        : 'bg-red-900/20 text-red-900 border-red-700/60'
+                                                        }`}
+                                                >
+                                                    [ {ok ? '✓ ВЕРНО' : '✗ ОШИБКА'} ]
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <p className="text-xs font-bold tracking-wider text-zinc-700 uppercase bg-zinc-300/80 p-2 border border-zinc-400 inline-block clip-corner mt-2">

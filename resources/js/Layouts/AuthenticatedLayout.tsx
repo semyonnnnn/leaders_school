@@ -59,7 +59,7 @@ export default function Authenticated({
             )}
 
             {/* TopAppBar - Core Tactical Header Chassis */}
-            <header className="fixed top-0 z-40 flex h-20 w-full items-center justify-between border-b border-zinc-300 bg-zinc-50 px-4 select-none sm:px-8">
+            <header className="fixed top-0 z-40 flex w-full items-center justify-between border-b border-zinc-300 bg-zinc-50 px-4 select-none sm:px-8">
                 <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] bg-size-[14px_14px] opacity-[0.02]"></div>
 
                 <div className="relative z-10 flex items-center gap-6">
@@ -84,7 +84,7 @@ export default function Authenticated({
                 <div className="relative z-10 flex items-center gap-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger className="focus:outline-none">
-                            <div className="group clip-corner flex cursor-pointer items-center gap-3 border border-zinc-300 bg-zinc-100 p-2 text-left transition-all duration-150 hover:border-zinc-400 hover:bg-zinc-200/80">
+                            <div className="group clip-corner flex cursor-pointer items-center gap-3 border border-zinc-300 bg-zinc-100 p-1 text-left transition-all duration-150 hover:border-zinc-400 hover:bg-zinc-200/80">
                                 <div className="clip-corner h-9 w-9 shrink-0 overflow-hidden border border-zinc-400 bg-zinc-300">
                                     <img
                                         src={

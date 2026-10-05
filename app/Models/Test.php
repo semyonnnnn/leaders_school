@@ -57,4 +57,9 @@ class Test extends Model
             ->where('is_passed', true)
             ->exists();
     }
+    public function materials()
+    {
+        return $this->belongsToMany(Material::class, 'test_materials')
+            ->withTimestamps();
+    }
 }

@@ -2,9 +2,11 @@
 
 namespace App\Repositories;
 
+use Carbon\Carbon;
+////////////////////////
 use App\Models\Test;
 use App\Models\TestAttempt;
-use Carbon\Carbon;
+use App\Services\TestService;
 
 class TestAttemptRepository
 {
@@ -27,7 +29,9 @@ class TestAttemptRepository
 
     public function getCompletedTests(int $userId)
     {
+
         return Test::select(['id', 'title', 'description', 'content', 'user_id', 'created_at', 'updated_at'])
+            ->with('materials:id,title')
             ->whereHas('testAttempts', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })
@@ -41,6 +45,7 @@ class TestAttemptRepository
             ->paginate(6, ['*'], 'passed_page')
             ->withQueryString()
             ->through(function ($test) {
+
                 return [
                     'id' => $test->id,
                     'title' => $test->title,
@@ -49,10 +54,10 @@ class TestAttemptRepository
                     'created_at' => $this->formatTimestamp($test->created_at),
                     'updated_at' => $this->formatTimestamp($test->updated_at),
 
-                    // Completed test dynamic payloads:
                     'attempts_count' => $test->test_attempts_count,
                     'latest_attempt_at' => $this->formatTimestamp($test->latest_attempt),
                     'questions_count' => count($test->content ?? []),
+                    'materials' => TestService::getMaterialsWithLink($test->materials),
                     'is_new' => $test->created_at?->gt(now()->subDays(3)) ?? false,
                     'badge_color' => 'green',
                 ];
@@ -62,6 +67,7 @@ class TestAttemptRepository
     public function getAvailableTests(int $userId)
     {
         return Test::select(['id', 'title', 'description', 'content', 'user_id', 'created_at', 'updated_at'])
+            ->with('materials:id,title')
             ->where('user_id', '!=', $userId)
             ->whereDoesntHave('testAttempts', fn($q) => $q->where('user_id', $userId))
             ->latest()
@@ -76,8 +82,8 @@ class TestAttemptRepository
                     'created_at' => $this->formatTimestamp($test->created_at),
                     'updated_at' => $this->formatTimestamp($test->updated_at),
 
-                    // Independent dynamic payloads:
                     'questions_count' => count($test->content ?? []),
+                    'materials' => TestService::getMaterialsWithLink($test->materials),
                     'is_new' => $test->created_at?->gt(now()->subDays(3)) ?? false,
                     'badge_color' => 'amber',
                 ];
@@ -87,6 +93,7 @@ class TestAttemptRepository
     public function getMyTests(int $userId)
     {
         return Test::select(['id', 'title', 'description', 'content', 'user_id', 'created_at', 'updated_at'])
+            ->with('materials:id,title')
             ->where('user_id', $userId)
             ->latest()
             ->paginate(6, ['*'], 'my_page')
@@ -100,8 +107,8 @@ class TestAttemptRepository
                     'created_at' => $this->formatTimestamp($test->created_at),
                     'updated_at' => $this->formatTimestamp($test->updated_at),
 
-                    // Author/Owner dynamic payloads:
                     'questions_count' => count($test->content ?? []),
+                    'materials' => TestService::getMaterialsWithLink($test->materials),
                     'is_new' => $test->created_at?->gt(now()->subDays(3)) ?? false,
                     'badge_color' => 'blue',
                 ];
@@ -122,9 +129,24 @@ class TestAttemptRepository
             ->locale('ru')
             ->isoFormat('D MMMM YYYY HH:mm') . ' МСК';
     }
+
     public function getCompletedTest(int $testId, int $userId): ?array
     {
-        $attempt = TestAttempt::with('test:id,title,description')
+        $attempt = TestAttempt::with([
+            'test' => function ($query) {
+                $query->select([
+                    'id',
+                    'title',
+                    'description',
+                    'minPoints',
+                    'maxPoints',
+                    'user_id',
+                    'created_at',
+                    'updated_at',
+                ]);
+            },
+            'test.user:id,name', // Nested eager loading for test author
+        ])
             ->where('test_id', $testId)
             ->where('user_id', $userId)
             ->latest()
@@ -134,12 +156,19 @@ class TestAttemptRepository
             return null;
         }
 
-        // Strip correct_answer entirely — never sent to the frontend,
-        // regardless of whether the question was answered correctly.
+        // Strip correct_answer entirely — never sent to the frontend
         $content = collect($attempt->content)->map(function ($question) {
             unset($question['correct_answer']);
             return $question;
         })->all();
+
+        $testData = $attempt->test ? $attempt->test->toArray() : [];
+
+        // Replace user_id with user_name and clean up relationship key
+        if (isset($testData['user'])) {
+            $testData['user_name'] = $testData['user']['name'] ?? null;
+            unset($testData['user'], $testData['user_id']);
+        }
 
         return [
             'id' => $attempt->id,
@@ -153,11 +182,7 @@ class TestAttemptRepository
             'content' => $content,
             'created_at' => $this->formatTimestamp($attempt->created_at),
             'updated_at' => $this->formatTimestamp($attempt->updated_at),
-            'test' => [
-                'id' => $attempt->test->id,
-                'title' => $attempt->test->title,
-                'description' => $attempt->test->description,
-            ],
+            'test' => $testData,
         ];
     }
 

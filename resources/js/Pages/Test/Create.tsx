@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
@@ -17,10 +17,16 @@ export interface QuestionItem {
     options: AnswerOption[];
 }
 
+export interface Material {
+    id: number;
+    title: string;
+}
+
 export interface TestFormData {
     title: string;
     description: string;
     questions: QuestionItem[];
+    material_ids: number[];
 }
 
 const generateUUID = (): string => {
@@ -34,8 +40,6 @@ const generateUUID = (): string => {
     });
 };
 
-// Shared by the draft "new question" value input and each saved question's
-// value input, so both enforce the same 1-5 single-digit rule identically.
 const clampQuestionValue = (rawInput: string): number => {
     const digitsOnly = rawInput.replace(/\D/g, '');
 
@@ -47,14 +51,122 @@ const clampQuestionValue = (rawInput: string): number => {
     return Math.min(5, Math.max(1, lastDigit));
 };
 
-export default function Create({ auth }: PageProps) {
+function MaterialPicker({
+    materials,
+    selectedIds,
+    onChange,
+}: {
+    materials: Material[];
+    selectedIds: number[];
+    onChange: (ids: number[]) => void;
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [query, setQuery] = useState('');
+
+    const wrapperRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+                setQuery('');
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selected = selectedIds
+        .map((id) => materials.find((m) => m.id === id))
+        .filter((m): m is Material => m !== undefined);
+
+    const available = materials.filter(
+        (m) =>
+            !selectedIds.includes(m.id) &&
+            m.title.toLowerCase().includes(query.trim().toLowerCase()),
+    );
+
+    const handlePick = (id: number) => {
+        onChange([...selectedIds, id]);
+        setQuery('');
+        setIsOpen(false);
+    };
+
+    const handleRemove = (id: number) => {
+        onChange(selectedIds.filter((selectedId) => selectedId !== id));
+    };
+
+    return (
+        <div className="relative" ref={wrapperRef}>
+            {selected.length > 0 && (
+                <ul className="mb-2 flex flex-wrap gap-2">
+                    {selected.map((m) => (
+                        <li
+                            key={m.id}
+                            className="clip-corner flex items-center gap-2 border-2 border-amber-600 bg-amber-500/10 py-1 pr-1 pl-2.5 text-xs font-black tracking-wider text-zinc-900 uppercase"
+                        >
+                            <span>{m.title}</span>
+                            <button
+                                type="button"
+                                onClick={() => handleRemove(m.id)}
+                                aria-label={`Убрать материал ${m.title}`}
+                                className="flex h-5 w-5 cursor-pointer items-center justify-center text-sm leading-none font-black text-zinc-600 transition-colors hover:bg-red-600 hover:text-white"
+                            >
+                                ×
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            <input
+                type="text"
+                value={query}
+                onChange={(e) => {
+                    setQuery(e.target.value);
+                    setIsOpen(true);
+                }}
+                onFocus={() => setIsOpen(true)}
+                onClick={() => setIsOpen(true)}
+                placeholder="ПОИСК МАТЕРИАЛА..."
+                className="w-full bg-zinc-100/90 text-zinc-950 placeholder-zinc-500 text-xs px-3 py-2.5 font-bold border-2 border-zinc-400 outline-hidden focus:border-amber-600 uppercase tracking-wider clip-corner"
+            />
+
+            {isOpen && (
+                <div className="absolute right-0 left-0 z-30 mt-1 max-h-60 overflow-y-auto border-2 border-zinc-400 bg-zinc-100 shadow-md">
+                    {available.length > 0 ? (
+                        available.map((m) => (
+                            <div
+                                key={m.id}
+                                onClick={() => handlePick(m.id)}
+                                className="cursor-pointer border-b border-zinc-300 px-3 py-2 text-xs font-bold tracking-wider text-zinc-950 uppercase transition-colors last:border-b-0 hover:bg-amber-500"
+                            >
+                                {m.title}
+                            </div>
+                        ))
+                    ) : (
+                        <div className="px-3 py-3 text-center text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+                            {materials.length === 0
+                                ? 'Материалов нет'
+                                : selectedIds.length === materials.length
+                                    ? 'Все материалы выбраны'
+                                    : 'Ничего не найдено'}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function Create({ auth, materials }: PageProps<{ materials: Material[] }>) {
     const { data, setData, post, processing, errors } = useForm<TestFormData>({
         title: '',
         description: '',
         questions: [],
+        material_ids: [],
     });
 
-    // Independent state for title and description to duplicate field views cleanly across blocks
     const [titleState, setTitleState] = useState('');
     const [descriptionState, setDescriptionState] = useState('');
 
@@ -64,12 +176,10 @@ export default function Create({ auth }: PageProps) {
     const [correctIndex, setCorrectIndex] = useState<number>(0);
     const [draftError, setDraftError] = useState<string | null>(null);
 
-    // Modal state management
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<'single' | 'all' | null>(null);
     const [targetQuestionId, setTargetQuestionId] = useState<string | null>(null);
 
-    // Handlers to update local UI state and sync immediately with useForm data
     const handleTitleChange = (val: string) => {
         setTitleState(val);
         setData('title', val);
@@ -111,7 +221,6 @@ export default function Create({ auth }: PageProps) {
 
         setData('questions', [...data.questions, newQuestion]);
 
-        // Reset draft state
         setQuestionText('');
         setQuestionValue(1);
         setAnswers(['', '', '', '']);
@@ -215,7 +324,6 @@ export default function Create({ auth }: PageProps) {
             <Head title="Создание теста" />
 
             <form onSubmit={handleSubmit} className="w-full p-4 sm:p-6 font-mono flex flex-col justify-start items-start bg-zinc-400 gap-6">
-                {/* FIRST BLOCK: Constructor Header / General Info */}
                 <div
                     className="w-full h-auto p-6 clip-corner border-[3px] border-amber-600 shadow-md"
                     style={{
@@ -255,7 +363,7 @@ export default function Create({ auth }: PageProps) {
                         {errors.title && <p className="text-red-700 text-[10px] font-bold mt-1 uppercase">{errors.title}</p>}
                     </div>
 
-                    <div className="mb-6">
+                    <div className="mb-4">
                         <label className="block text-[10px] font-black text-zinc-600 uppercase mb-1">
                             Описание и Инструкции
                         </label>
@@ -268,6 +376,18 @@ export default function Create({ auth }: PageProps) {
                             className="w-full bg-zinc-100/90 text-zinc-950 placeholder-zinc-500 text-xs p-3 font-bold border-2 border-zinc-400 outline-hidden focus:border-amber-600 uppercase tracking-wider clip-corner resize-none"
                         />
                         {errors.description && <p className="text-red-700 text-[10px] font-bold mt-1 uppercase">{errors.description}</p>}
+                    </div>
+
+                    <div className="mb-6">
+                        <label className="block text-[10px] font-black text-zinc-600 uppercase mb-1">
+                            Материалы Теста
+                        </label>
+                        <MaterialPicker
+                            materials={materials}
+                            selectedIds={data.material_ids}
+                            onChange={(ids) => setData('material_ids', ids)}
+                        />
+                        {errors.material_ids && <p className="text-red-700 text-[10px] font-bold mt-1 uppercase">{errors.material_ids}</p>}
                     </div>
 
                     <div className="pt-4 border-t-2 border-zinc-400">
@@ -379,7 +499,6 @@ export default function Create({ auth }: PageProps) {
                     </p>
                 )}
 
-                {/* SECOND BLOCK: Saved Questions & Duplicated Test Info fields */}
                 {data.questions.length > 0 && (
                     <div
                         className="w-full flex flex-col gap-4 h-auto p-6 clip-corner border-[3px] border-amber-600 shadow-md bg-zinc-300"
@@ -403,7 +522,6 @@ export default function Create({ auth }: PageProps) {
                             </span>
                         </div>
 
-                        {/* DUPLICATED TEST FIELDS FOR SYNCED LIVE EDITING */}
                         <div className="bg-zinc-200/90 p-4 border-2 border-zinc-400 clip-corner mb-2 space-y-3">
                             <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest block mb-1">
                                 // ДАННЫЕ ТЕСТА (СИНХРОНИЗИРОВАНО)

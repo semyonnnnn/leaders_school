@@ -13,6 +13,7 @@ use App\Models\TestAttempt;
 use App\Repositories\TestAttemptRepository;
 use App\Services\TestService;
 use App\Models\Setting;
+use App\Models\Material;
 
 class TestController extends Controller
 {
@@ -42,13 +43,12 @@ class TestController extends Controller
         ]);
     }
 
+    //TestStoreRequest
     public function store(TestStoreRequest $r, TestService $testService)
     {
-        $test = $testService->getData($r->validated());
+        $test = $testService->store($r->validated());
 
-        Test::create($test);
-
-        return redirect()->route('tests.index', ['tab' => 'my'])->with('success', "Тест '{$test['title']}' успешно создан!");
+        return redirect()->route('tests.index', ['tab' => 'my'])->with('message', "Тест '{$test['title']}' успешно создан!");
     }
 
     public function destroy(int $id)
@@ -66,7 +66,13 @@ class TestController extends Controller
 
     public function create()
     {
-        return Inertia::render('Test/Create');
+        $materials = Material::query()
+            ->orderBy('id', 'asc')
+            ->get(['id', 'title']);
+
+        return Inertia::render('Test/Create', [
+            'materials' => $materials,
+        ]);
     }
 
     public function take(int $testId, TestAttemptRepository $repo, TestService $testService)

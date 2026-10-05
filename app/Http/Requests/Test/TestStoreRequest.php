@@ -17,6 +17,9 @@ class TestStoreRequest extends FormRequest
             'title' => ['required', 'string', 'min:3', 'max:255'],
             'description' => ['nullable', 'string', 'min:3'],
 
+            'material_ids' => ['nullable', 'array'],
+            'material_ids.*' => ['integer', 'exists:materials,id'],
+
             'questions' => ['required', 'array', 'min:1'],
             'questions.*.id' => [
                 'required',
@@ -59,6 +62,10 @@ class TestStoreRequest extends FormRequest
 
             'description.string' => 'Описание должно быть строкой.',
             'description.min' => 'Описание должно содержать не менее 3 символов.',
+
+            'material_ids.array' => 'Материалы должны быть переданы в виде массива.',
+            'material_ids.*.integer' => 'Идентификатор материала должен быть числом.',
+            'material_ids.*.exists' => 'Выбранный материал не существует в системе.',
 
             'questions.required' => 'Тест должен содержать вопросы.',
             'questions.array' => 'Вопросы должны быть представлены в виде массива.',

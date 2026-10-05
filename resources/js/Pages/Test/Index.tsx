@@ -42,6 +42,8 @@ export default function Index({
         type: null,
     });
 
+    console.log("my_tests:", my_tests);
+
     // Directly extract flash from page props
     const { flash } = usePage<PageProps<{ flash: CustomFlashProps }>>().props;
 
