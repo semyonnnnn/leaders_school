@@ -2,8 +2,6 @@ import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-// Shape matches TestAttemptRepository::getCompletedTest().
-// correct_answer is never sent by the server — nothing to redact here.
 interface Question {
     id: string;
     value: number;
@@ -21,7 +19,7 @@ interface TestAttemptResult {
     grade: string | number | null;
     created_at: string | null;
     updated_at: string | null;
-    content: Record<string, Question>; // keyed by question text
+    content: Record<string, Question>;
     test: {
         id: number;
         title: string;
@@ -36,7 +34,6 @@ export default function Result({
 }) {
     const { test, has_passed, content } = testAttempt;
 
-    // Same grid-paper background as Show.tsx so both pages feel like one system
     const gridBackground = {
         backgroundImage: `
             linear-gradient(to right, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
@@ -46,7 +43,14 @@ export default function Result({
         backgroundSize: '16px 16px, 16px 16px, 100% 100%',
     };
 
-    // One list so the four stats can't drift out of sync in the markup
+    const cardGridPattern = {
+        backgroundImage: `
+            linear-gradient(to right, rgba(0, 0, 0, 0.07) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 1px, transparent 1px)
+        `,
+        backgroundSize: '12px 12px',
+    };
+
     const stats: { label: string; value: string | number }[] = [
         { label: 'Попытка', value: testAttempt.attempt },
         { label: 'Баллы', value: testAttempt.user_points },
@@ -60,7 +64,7 @@ export default function Result({
         <AuthenticatedLayout
             header={
                 <div
-                    className="flex w-full items-center justify-between border-b-2 border-white/20 p-4 font-mono"
+                    className="flex w-full items-center justify-between border-b-2 border-white/20 p-4 font-mono shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
                     style={{
                         backgroundImage: `
                             linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
@@ -71,7 +75,6 @@ export default function Result({
                     }}
                 >
                     <div className="relative z-10 flex items-center gap-2 text-xs font-mono tracking-widest uppercase md:text-sm">
-                        {/* Back to the completed tab, not the default "available" one */}
                         <Link
                             href={route('tests.index', { tab: 'completed' })}
                             className="font-semibold text-zinc-300 transition hover:text-amber-400"
@@ -79,13 +82,13 @@ export default function Result({
                             тесты
                         </Link>
                         <span className="font-bold text-amber-500">&gt;&gt;</span>
-                        <span className="truncate font-bold text-amber-400 select-none">
+                        <span className="truncate font-bold text-amber-400 select-none drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">
                             результат теста #{test.id}
                         </span>
                     </div>
 
                     <div className="flex items-center space-x-2 text-[10px] font-bold tracking-wider text-zinc-300 uppercase">
-                        <span className="h-2 w-2 rounded-xs bg-zinc-400" />
+                        <span className="h-2 w-2 rounded-xs bg-zinc-400 animate-pulse" />
                         <span>режим_просмотра</span>
                     </div>
                 </div>
@@ -94,119 +97,157 @@ export default function Result({
             <Head title={`Результат: ${test.title}`} />
 
             <div className="flex w-full flex-col items-start justify-start gap-6 bg-zinc-400 p-4 font-mono sm:p-6">
-                {/* SUMMARY CARD */}
+
+                {/* PRIMARY TELEMETRY PANEL WITH AMBER BORDER */}
                 <div
-                    className="clip-corner h-auto w-full border-[3px] border-amber-600 p-6 shadow-md"
+                    className="clip-corner h-auto w-full border-[3px] border-amber-600 p-6 shadow-[4px_4px_0px_rgba(217,119,6,0.3)]"
                     style={gridBackground}
                 >
-                    <div className="mb-4 flex items-center justify-between border-b-2 border-zinc-400 pb-2">
+                    <div className="mb-5 flex items-center justify-between border-b-2 border-zinc-400 pb-3">
                         <div className="flex items-center gap-2">
-                            <span className="font-black text-amber-600">//</span>
+                            <span className="font-black text-amber-600 animate-pulse">//</span>
                             <h3 className="text-base font-black tracking-widest text-zinc-900 uppercase">
                                 {test.title}
                             </h3>
                         </div>
 
-                        {/* Colour and label are driven only by has_passed */}
+                        {/* MUTED STATUS BADGE */}
                         <span
-                            className={`clip-corner px-2 py-0.5 text-[10px] font-black text-zinc-100 ${has_passed ? 'bg-emerald-600' : 'bg-red-600'
+                            className={`clip-corner px-4 py-1 text-xs tracking-widest font-black uppercase border-2 shadow-sm ${has_passed
+                                ? 'bg-emerald-800 text-emerald-100 border-emerald-600'
+                                : 'bg-red-800 text-red-100 border-red-600'
                                 }`}
                         >
-                            {has_passed ? 'ТЕСТ ПРОЙДЕН' : 'ТЕСТ НЕ ПРОЙДЕН'}
+                            {has_passed ? '✓ ТЕСТ ПРОЙДЕН' : '✗ ТЕСТ НЕ ПРОЙДЕН'}
                         </span>
                     </div>
 
-                    {test.description && (
-                        <div className="clip-corner mb-4 border-2 border-zinc-400 bg-zinc-200/80 p-3 text-xs font-bold tracking-wider text-zinc-700 uppercase">
-                            <span className="mb-1 block text-amber-700">
-                                // ИНСТРУКЦИЯ К ТЕСТУ:
-                            </span>
-                            {test.description}
+                    <div className="flex flex-col gap-4 lg:flex-row items-stretch">
+                        {/* CONDENSED STATS BLOCK */}
+                        <div className="clip-corner grid w-full max-w-xs shrink-0 grid-cols-2 gap-[2px] border-2 border-zinc-600 bg-zinc-600 lg:w-64">
+                            {stats.map((stat) => (
+                                <div
+                                    key={stat.label}
+                                    className="flex flex-col justify-center bg-zinc-100 p-3"
+                                >
+                                    <span className="text-[10px] font-black tracking-widest text-zinc-500 uppercase">
+                                        {stat.label}
+                                    </span>
+                                    <span className="mt-1 text-2xl font-black text-zinc-900">
+                                        {stat.value}
+                                    </span>
+                                </div>
+                            ))}
                         </div>
-                    )}
 
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        {stats.map((stat) => (
-                            <div
-                                key={stat.label}
-                                className="clip-corner border-2 border-zinc-400 bg-zinc-100 p-3"
-                            >
-                                <span className="block text-[10px] font-black text-zinc-500 uppercase">
-                                    {stat.label}:
-                                </span>
-                                <span className="text-lg font-black text-zinc-900">
-                                    {stat.value}
-                                </span>
+                        {/* BRIEFING PANEL */}
+                        {(test.description || !has_passed) && (
+                            <div className="clip-corner flex flex-1 flex-col gap-4 border-2 border-amber-600/60 border-l-4 border-l-amber-600 bg-amber-100/40 p-4">
+                                {test.description && (
+                                    <div className="flex flex-col">
+                                        <span className="mb-1 block text-[10px] font-black tracking-widest text-amber-700 uppercase">
+                                            // ИНСТРУКЦИЯ К ТЕСТУ
+                                        </span>
+                                        <p className="text-xs font-bold tracking-wider text-zinc-800 uppercase leading-relaxed">
+                                            {test.description}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {test.description && !has_passed && (
+                                    <div className="h-[2px] w-full bg-amber-600/30" />
+                                )}
+
+                                {!has_passed && (
+                                    <div className="flex flex-col gap-3 mt-auto">
+                                        <p className="text-xs font-bold tracking-wider text-zinc-800 uppercase">
+                                            <span className="mr-1 text-red-700 font-black">[!]</span>
+                                            Для подготовки к следующей попытке изучите материалы по теме — правильные ответы не показываются.
+                                        </p>
+                                        <Link
+                                            href={route('materials.index')}
+                                            className="clip-corner w-fit border-2 border-zinc-800 bg-zinc-800 px-4 py-2 text-[10px] font-black tracking-widest text-amber-400 uppercase transition-all hover:bg-amber-500 hover:text-zinc-950 hover:shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                                        >
+                                            // перейти_к_материалам →
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
-                        ))}
+                        )}
                     </div>
 
-                    <p className="mt-4 text-[10px] font-bold tracking-wider text-zinc-600 uppercase">
+                    <p className="mt-5 text-[10px] font-bold tracking-wider text-zinc-600 uppercase border-t border-zinc-300/50 pt-2">
                         Завершён: {testAttempt.created_at ?? '—'}
                     </p>
                 </div>
 
-                {/* MATERIALS NUDGE — only when the attempt didn't pass */}
-                {!has_passed && (
-                    <div className="clip-corner w-full border-2 border-amber-600 bg-amber-100/60 p-4">
-                        <p className="text-xs font-bold tracking-wider text-zinc-800 uppercase">
-                            <span className="mr-1 text-amber-700">//</span>
-                            Для подготовки к следующей попытке изучите материалы по теме —
-                            правильные ответы не показываются
-                        </p>
-                        <Link
-                            href={route('materials.index') /* TODO: confirm real route name */}
-                            className="clip-corner mt-3 inline-block border-2 border-zinc-800 bg-zinc-950 px-4 py-2 text-[10px] font-black tracking-widest text-amber-400 uppercase transition-all hover:border-amber-600 hover:bg-amber-500 hover:text-zinc-950"
-                        >
-                            // перейти_к_материалам →
-                        </Link>
-                    </div>
-                )}
-
-                {/* QUESTIONS BREAKDOWN */}
-                <div className="clip-corner w-full border-2 border-zinc-500 bg-zinc-100 p-5 shadow-xs">
-                    <div className="mb-4 flex items-center justify-between border-b-2 border-zinc-300 pb-2">
+                {/* QUESTIONS BREAKDOWN WITH GRID TEXTURE */}
+                <div className="clip-corner w-full border-2 border-zinc-500 bg-zinc-300 p-5 shadow-[4px_4px_0px_rgba(113,113,122,0.3)]">
+                    <div className="mb-4 flex items-center justify-between border-b-2 border-zinc-400 pb-2">
                         <div className="flex items-center gap-2">
                             <span className="font-black text-amber-600">//</span>
                             <h3 className="text-sm font-black tracking-widest text-zinc-900 uppercase">
                                 Разбор вопросов
                             </h3>
                         </div>
-                        <span className="text-[10px] font-black tracking-wider text-zinc-500 uppercase">
+                        <span className="text-sm font-black tracking-wider text-zinc-700 uppercase bg-zinc-200 px-2 py-0.5 clip-corner border border-zinc-400">
                             {questions.filter(([, q]) => q.is_correct).length} / {questions.length} верно
                         </span>
                     </div>
 
                     <div className="flex flex-col gap-3">
-                        {questions.map(([questionText, question]) => (
-                            <div
-                                key={question.id}
-                                className={`clip-corner border-2 p-4 ${question.is_correct
-                                        ? 'border-emerald-600 bg-emerald-50/70'
-                                        : 'border-red-600 bg-red-50/70'
-                                    }`}
-                            >
-                                <div className="mb-2 flex items-start justify-between gap-3">
-                                    <p className="text-sm font-bold text-zinc-900">
-                                        {questionText}
-                                    </p>
-                                    <span
-                                        className={`clip-corner shrink-0 px-2 py-0.5 text-[10px] font-black text-zinc-100 uppercase ${question.is_correct
-                                                ? 'bg-emerald-600'
-                                                : 'bg-red-600'
+                        {questions.map(([questionText, question], idx) => {
+                            const ok = question.is_correct;
+
+                            return (
+                                <div
+                                    key={question.id}
+                                    style={cardGridPattern}
+                                    className="clip-corner flex border-2 border-zinc-500 bg-zinc-200 transition-colors hover:bg-zinc-100"
+                                >
+                                    {/* MUTED STATUS STRIP */}
+                                    <div
+                                        className={`w-2 shrink-0 ${ok ? 'bg-emerald-800' : 'bg-red-800'
                                             }`}
-                                    >
-                                        {question.is_correct ? 'ВЕРНО ✓' : 'НЕВЕРНО ✗'}
-                                    </span>
+                                    />
+
+                                    <div className="flex-1 p-4">
+                                        <div className="mb-2 flex items-start justify-between gap-3">
+                                            <div className="flex items-start gap-2">
+                                                <span className="shrink-0 font-mono text-xs font-black text-amber-600 mt-1">
+                                                    [{String(idx + 1).padStart(2, '0')}]
+                                                </span>
+                                                <p className="text-lg font-bold text-zinc-900 leading-tight">
+                                                    {questionText}
+                                                </p>
+                                            </div>
+
+                                            {/* MUTED CARD STATUS */}
+                                            <span
+                                                className={`shrink-0 text-xs md:text-sm font-black tracking-widest uppercase px-2 py-0.5 clip-corner border ${ok
+                                                    ? 'bg-emerald-900/20 text-emerald-900 border-emerald-700/60'
+                                                    : 'bg-red-900/20 text-red-900 border-red-700/60'
+                                                    }`}
+                                            >
+                                                [ {ok ? '✓ ВЕРНО' : '✗ ОШИБКА'} ]
+                                            </span>
+                                        </div>
+
+                                        <p className="text-xs font-bold tracking-wider text-zinc-700 uppercase bg-zinc-300/80 p-2 border border-zinc-400 inline-block clip-corner mt-2">
+                                            Ваш ответ:{' '}
+                                            <span
+                                                className={`normal-case text-base md:text-lg ml-2 ${ok
+                                                    ? 'text-zinc-900 font-black'
+                                                    : 'text-zinc-600 font-medium line-through decoration-red-800/80 decoration-2'
+                                                    }`}
+                                            >
+                                                {question.user_answer}
+                                            </span>
+                                        </p>
+                                    </div>
                                 </div>
-                                <p className="text-xs font-bold tracking-wider text-zinc-600 uppercase">
-                                    Ваш ответ:{' '}
-                                    <span className="text-zinc-900 normal-case">
-                                        {question.user_answer}
-                                    </span>
-                                </p>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </div>

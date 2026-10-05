@@ -79,7 +79,7 @@ export default function Index({ materials }: PageProps<UploadType>) {
                                 onClick={() => {
                                     setEditMode(!editMode);
                                 }}
-                                className="group relative px-6 py-2 bg-zinc-950/80 border border-amber-500/50 text-amber-500 text-xs font-mono font-bold uppercase tracking-[0.2em] 
+                                className="group relative px-6 py-2 bg-zinc-700 border border-amber-500/50 text-amber-500 text-xs font-mono font-bold uppercase tracking-[0.2em] 
     hover:bg-amber-500 hover:text-zinc-950 transition-all duration-200 
     before:absolute before:top-0 before:left-0 before:w-1 before:h-full before:bg-amber-500 
     hover:before:bg-zinc-950 cursor-pointer"
