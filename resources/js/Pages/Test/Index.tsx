@@ -28,11 +28,6 @@ export default function Index({
     active_tab: TabType;
 }) {
     const [searchQuery, setSearchQuery] = useState<string>('');
-    const [activeTab, setActiveTab] = useState<TabType>(active_tab);
-
-    useEffect(() => {
-        setActiveTab(active_tab);
-    }, [active_tab]);
 
     // MODAL STATE MANAGEMENT
     const [deleteModal, setDeleteModal] = useState<{
@@ -59,7 +54,6 @@ export default function Index({
     };
 
     const handleTabChange = (tab: TabType) => {
-        setActiveTab(tab);
 
         router.get(
             route('tests.index'),
@@ -71,6 +65,7 @@ export default function Index({
                         : tab === 'completed'
                             ? 'completed_tests'
                             : 'my_tests',
+                    'active_tab'
                 ],
                 preserveState: true,
                 preserveScroll: true,
@@ -114,27 +109,27 @@ export default function Index({
 
     // SELECT CURRENT LIST OF TESTS TO RENDER BASED ON ACTIVE TAB
     const currentTests =
-        activeTab === 'available'
+        active_tab === 'available'
             ? available_tests
-            : activeTab === 'completed'
+            : active_tab === 'completed'
                 ? completed_tests
                 : my_tests;
 
     // Determine the corresponding 'only' prop identifier for pagination requests
     const currentPaginationOnlyProp =
-        activeTab === 'available'
+        active_tab === 'available'
             ? 'available_tests'
-            : activeTab === 'completed'
+            : active_tab === 'completed'
                 ? 'completed_tests'
                 : 'my_tests';
 
     const currentEmptyMessage =
-        activeTab === 'my'
+        active_tab === 'my'
             ? 'Вы еще не создали ни одного теста'
             : 'Записи не найдены по заданным критериям';
 
     const currentDeleteHandler =
-        activeTab === 'completed'
+        active_tab === 'completed'
             ? openDeleteCompletedModal
             : openDeleteAvailableModal;
 
@@ -210,7 +205,7 @@ export default function Index({
                     <div className="clip-corner relative z-10 flex flex-col items-start justify-between gap-6 border-2 border-zinc-300 bg-zinc-100 p-5 shadow-xs lg:flex-row lg:items-center">
                         {/* CONDITIONAL HEADERS & PERMANENT CREATE BUTTON */}
                         <div className="flex flex-wrap items-center gap-6">
-                            {activeTab === 'available' && (
+                            {active_tab === 'available' && (
                                 <TestTabHeader
                                     title="Доступные Тесты"
                                     count={available_tests?.total ?? 0}
@@ -219,7 +214,7 @@ export default function Index({
                                     accentColor="bg-amber-500"
                                 />
                             )}
-                            {activeTab === 'completed' && (
+                            {active_tab === 'completed' && (
                                 <TestTabHeader
                                     title="Завершенные Тесты"
                                     count={completed_tests?.total ?? 0}
@@ -228,7 +223,7 @@ export default function Index({
                                     accentColor="bg-emerald-500"
                                 />
                             )}
-                            {activeTab === 'my' && (
+                            {active_tab === 'my' && (
                                 <TestTabHeader
                                     title="Мои Тесты"
                                     count={my_tests?.total ?? 0}
@@ -252,7 +247,7 @@ export default function Index({
                         <div className="mt-4 flex w-full flex-wrap items-center gap-2 lg:mt-0 lg:w-auto">
                             <button
                                 onClick={() => handleTabChange('available')}
-                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${activeTab === 'available'
+                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${active_tab === 'available'
                                     ? 'border-zinc-950 bg-amber-500 text-zinc-950'
                                     : 'border-amber-500 bg-zinc-950 text-amber-500 hover:bg-amber-500 hover:text-zinc-950'
                                     }`}
@@ -262,7 +257,7 @@ export default function Index({
 
                             <button
                                 onClick={() => handleTabChange('completed')}
-                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${activeTab === 'completed'
+                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${active_tab === 'completed'
                                     ? 'border-zinc-950 bg-amber-500 text-zinc-950'
                                     : 'border-amber-500 bg-zinc-950 text-amber-500 hover:bg-amber-500 hover:text-zinc-950'
                                     }`}
@@ -272,7 +267,7 @@ export default function Index({
 
                             <button
                                 onClick={() => handleTabChange('my')}
-                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${activeTab === 'my'
+                                className={`clip-corner cursor-pointer border-2 px-6 py-3 text-sm font-black tracking-[0.15em] uppercase shadow-xs transition-all duration-200 ${active_tab === 'my'
                                     ? 'border-zinc-950 bg-amber-500 text-zinc-950'
                                     : 'border-amber-500 bg-zinc-950 text-amber-500 hover:bg-amber-500 hover:text-zinc-950'
                                     }`}
@@ -291,7 +286,7 @@ export default function Index({
                                         key={test.id}
                                         test={test}
                                         current_user_id={current_user_id}
-                                        activeTab={activeTab}
+                                        activeTab={active_tab}
                                         onDelete={currentDeleteHandler}
                                     />
                                 ))}

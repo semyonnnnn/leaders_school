@@ -29,7 +29,7 @@ export const Pagination = ({
             url,
             {},
             {
-                ...(only ? { only: [only] } : {}),
+                ...(only ? { only: [only, 'active_tab'] } : {}),
                 preserveState: true,
                 preserveScroll: true,
             },
@@ -63,11 +63,10 @@ export const Pagination = ({
                             key={idx}
                             type="button"
                             onClick={() => handlePageClick(link.url!)}
-                            className={`cursor-pointer border px-3 py-1.5 font-mono text-[10px] font-black tracking-widest uppercase transition-all duration-75 select-none active:scale-98 ${
-                                link.active
-                                    ? 'translate-y-0.5 border-orange-950 bg-orange-700 text-orange-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]'
-                                    : 'border-zinc-950 bg-zinc-800 text-zinc-400 shadow-[0_2px_0_#09090b] hover:translate-y-0.5 hover:border-orange-900 hover:text-orange-500 hover:shadow-none'
-                            }`}
+                            className={`cursor-pointer border px-3 py-1.5 font-mono text-[10px] font-black tracking-widest uppercase transition-all duration-75 select-none active:scale-98 ${link.active
+                                ? 'translate-y-0.5 border-orange-950 bg-orange-700 text-orange-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]'
+                                : 'border-zinc-950 bg-zinc-800 text-zinc-400 shadow-[0_2px_0_#09090b] hover:translate-y-0.5 hover:border-orange-900 hover:text-orange-500 hover:shadow-none'
+                                }`}
                         >
                             <span className="ac-text block">{cleanLabel}</span>
                         </button>
