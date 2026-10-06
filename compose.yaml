@@ -31,7 +31,7 @@ services:
     mariadb:
         image: 'mariadb:11'
         ports:
-            - '${FORWARD_DB_PORT}:3306'
+            - '${LOCAL_BIND}:${FORWARD_DB_PORT}:3306'
         environment:
             MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
             MYSQL_ROOT_HOST: '%'
@@ -55,7 +55,7 @@ services:
     cloudbeaver:
         image: dbeaver/cloudbeaver:latest
         ports:
-            - '${CLOUDBEAVER_PORT}:8978'
+            - '${LOCAL_BIND}:${CLOUDBEAVER_PORT}:8978'
         volumes:
             - 'cloudbeaver-data:/opt/cloudbeaver/workspace'
         depends_on:
