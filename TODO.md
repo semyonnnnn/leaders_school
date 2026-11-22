@@ -1,5 +1,11 @@
-switch to atomic css engine
+# MAKE
 
-https://unocss.dev/
+- find conflicting external ports;
+- run app;
+- publish docker folder;
 
+---
 
+# FIX
+
+- ...
