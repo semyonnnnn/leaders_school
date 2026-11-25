@@ -67,19 +67,14 @@ class TestFactory extends Factory
         }
 
         $testService = app(TestService::class);
-
-        $testData = $testService->getData([
-            'title' => mb_substr($title, 0, 255),
-            'description' => mb_substr($description, 0, 255),
-            'questions' => $content,
-        ]);
+        $scores = $testService->calculateScores($content);
 
         return [
-            'title' => $testData['title'],
-            'description' => $testData['description'],
-            'content' => $testData['content'],
-            'minPoints' => $testData['minPoints'],
-            'maxPoints' => $testData['maxPoints'],
+            'title' => mb_substr($title, 0, 255),
+            'description' => mb_substr($description, 0, 255),
+            'content' => $content,
+            'minPoints' => $scores['minPoints'],
+            'maxPoints' => $scores['maxPoints'],
             'user_id' => 1,
         ];
     }
